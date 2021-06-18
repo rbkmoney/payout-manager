@@ -52,10 +52,8 @@ public class PayoutService {
         if (cash.getAmount() <= 0) {
             throw new InsufficientFundsException("Available amount must be greater than 0");
         }
-        long partyRevision = partyManagementService.getPartyRevision(partyId);
-        Party party = partyManagementService.getParty(partyId, partyRevision);
+        Party party = partyManagementService.getParty(partyId);
         String payoutToolId = party.getShops().get(shopId).getPayoutToolId();
-        Contract contract = getContract(party, payoutToolId, partyId);
         LocalDateTime localDateTime = LocalDateTime.now(ZoneOffset.UTC);
         String createdAt = TypeUtil.temporalToString(localDateTime.toInstant(ZoneOffset.UTC));
         List<FinalCashFlowPosting> cashFlowPostings = partyManagementService.computePayoutCashFlow(
@@ -80,7 +78,6 @@ public class PayoutService {
                 shopId,
                 cash,
                 payoutToolId,
-                contract,
                 localDateTime,
                 cashFlowPostings,
                 amount,
@@ -157,7 +154,6 @@ public class PayoutService {
             String shopId,
             Cash cash,
             String payoutToolId,
-            Contract contract,
             LocalDateTime localDateTime,
             List<FinalCashFlowPosting> cashFlowPostings,
             long amount,
@@ -169,7 +165,6 @@ public class PayoutService {
             payout.setCreatedAt(localDateTime);
             payout.setPartyId(partyId);
             payout.setShopId(shopId);
-            payout.setContractId(contract.getId());
             payout.setStatus(com.rbkmoney.payout.manager.domain.enums.PayoutStatus.UNPAID);
             try {
                 payout.setCashFlow(new ObjectMapper().writeValueAsString(cashFlowPostings.stream()
@@ -194,16 +189,6 @@ public class PayoutService {
         } catch (DaoException ex) {
             throw new StorageException(ex);
         }
-    }
-
-    private Contract getContract(Party party, String payoutToolId, String partyId) {
-        return party.getContracts().values().stream()
-                .filter(contractValue -> contractValue.getPayoutTools().stream()
-                        .anyMatch(payoutToolValue -> payoutToolValue.getId().equals(payoutToolId)))
-                .findFirst()
-                .orElseThrow(() -> new NotFoundException(
-                        String.format("Contract for payout tool not found, " +
-                                "partyId='%s', payoutToolId='%s'", partyId, payoutToolId)));
     }
 
     private void validateBalance(String payoutId, Clock clock, long accountId) {

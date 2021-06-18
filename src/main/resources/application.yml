@@ -51,9 +51,6 @@ info:
 retry-policy:
   maxAttempts: 10
 
-cache:
-  maxSize: 100
-
 service:
   shumway:
     url: http://localhost:8022/shumpune

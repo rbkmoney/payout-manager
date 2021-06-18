@@ -25,9 +25,9 @@
         <exposed.ports>${server.port} ${management.port}</exposed.ports>
         <dockerfile.registry>${env.REGISTRY}</dockerfile.registry>
         <db.host.name>localhost</db.host.name>
-        <db.host.port>5432</db.host.port>
+        <db.port>5432</db.port>
         <db.name>payout_manager</db.name>
-        <db.url>jdbc:postgresql://${db.host.name}:${db.host.port}/${db.name}</db.url>
+        <db.url>jdbc:postgresql://${db.host.name}:${db.port}/${db.name}</db.url>
         <db.user>postgres</db.user>
         <db.password>postgres</db.password>
         <db.schema>pm</db.schema>
@@ -67,7 +67,7 @@
         <dependency>
             <groupId>com.rbkmoney</groupId>
             <artifactId>payout-manager-proto</artifactId>
-            <version>1.4-7063cf0</version>
+            <version>1.5-f5e195c</version>
         </dependency>
         <dependency>
             <groupId>com.rbkmoney</groupId>
@@ -129,10 +129,6 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.github.ben-manes.caffeine</groupId>
-            <artifactId>caffeine</artifactId>
         </dependency>
         <dependency>
             <groupId>com.zaxxer</groupId>
@@ -310,10 +306,11 @@
             <plugin>
                 <groupId>com.rbkmoney.maven.plugins</groupId>
                 <artifactId>pg-embedded-plugin</artifactId>
-                <version>1.6</version>
+                <version>1.7</version>
                 <configuration>
-                    <port>${db.host.port}</port>
+                    <port>${db.port}</port>
                     <dbName>${db.name}</dbName>
+                    <name>${db.name}</name>
                     <schemas>
                         <schema>${db.schema}</schema>
                     </schemas>

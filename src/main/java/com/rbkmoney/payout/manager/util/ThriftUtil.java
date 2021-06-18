@@ -28,7 +28,6 @@ public class ThriftUtil {
                 .setCreatedAt(TypeUtil.temporalToString(payout.getCreatedAt().toInstant(ZoneOffset.UTC)))
                 .setPartyId(payout.getPartyId())
                 .setShopId(payout.getShopId())
-                .setContractId(payout.getContractId())
                 .setStatus(toThriftPayoutStatus(payout.getStatus()))
                 .setCashFlow(toThriftCashFlow(payout.getCashFlow()))
                 .setPayoutToolId(payout.getPayoutToolId())

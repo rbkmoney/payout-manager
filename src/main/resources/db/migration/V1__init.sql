@@ -9,7 +9,6 @@ create table if not exists pm.payout
     created_at     timestamp            not null,
     party_id       varchar              not null,
     shop_id        varchar              not null,
-    contract_id    varchar              not null,
     status         pm.payout_status not null,
     cash_flow      varchar,
     payout_tool_id varchar,
