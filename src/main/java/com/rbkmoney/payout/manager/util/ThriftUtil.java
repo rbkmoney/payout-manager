@@ -9,9 +9,16 @@ import com.rbkmoney.payout.manager.exception.NotFoundException;
 
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ThriftUtil {
+
+    public static Map<CashFlowType, Long> parseCashFlow(List<FinalCashFlowPosting> finalCashFlow) {
+        return finalCashFlow.stream()
+                .collect(Collectors.groupingBy(CashFlowType::getCashFlowType,
+                        Collectors.summingLong(cashFlow -> cashFlow.getVolume().getAmount())));
+    }
 
     public static Payout toThriftPayout(
             com.rbkmoney.payout.manager.domain.tables.pojos.Payout payout,
