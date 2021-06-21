@@ -1,42 +1,56 @@
 package com.rbkmoney.payout.manager.util;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.RuntimeJsonMappingException;
-import com.rbkmoney.damsel.domain.CurrencyRef;
-import com.rbkmoney.damsel.domain.FinalCashFlowPosting;
+import com.rbkmoney.damsel.domain.*;
 import com.rbkmoney.geck.common.util.TypeUtil;
-import com.rbkmoney.geck.serializer.kit.json.JsonProcessor;
-import com.rbkmoney.geck.serializer.kit.tbase.TBaseHandler;
 import com.rbkmoney.payout.manager.*;
+import com.rbkmoney.payout.manager.domain.enums.AccountType;
+import com.rbkmoney.payout.manager.domain.tables.pojos.CashFlowPosting;
 import com.rbkmoney.payout.manager.exception.NotFoundException;
-import org.apache.thrift.TBase;
 
-import java.io.IOException;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ThriftUtil {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    private static final JsonProcessor JSON_PROCESSOR = new JsonProcessor();
-
-    public static Payout toThriftPayout(com.rbkmoney.payout.manager.domain.tables.pojos.Payout payout) {
+    public static Payout toThriftPayout(
+            com.rbkmoney.payout.manager.domain.tables.pojos.Payout payout,
+            List<CashFlowPosting> cashFlowPostings) {
         return new Payout()
                 .setId(payout.getPayoutId())
                 .setCreatedAt(TypeUtil.temporalToString(payout.getCreatedAt().toInstant(ZoneOffset.UTC)))
                 .setPartyId(payout.getPartyId())
                 .setShopId(payout.getShopId())
                 .setStatus(toThriftPayoutStatus(payout.getStatus()))
-                .setCashFlow(toThriftCashFlow(payout.getCashFlow()))
+                .setCashFlow(toThriftCashFlows(cashFlowPostings))
                 .setPayoutToolId(payout.getPayoutToolId())
                 .setAmount(payout.getAmount())
                 .setFee(payout.getFee())
                 .setCurrency(new CurrencyRef(payout.getCurrencyCode()));
     }
 
-    public static PayoutStatus toThriftPayoutStatus(
+    public static List<CashFlowPosting> toDomainCashFlows(
+            String payoutId,
+            List<FinalCashFlowPosting> cashFlowPostings) {
+        return cashFlowPostings.stream()
+                .map(finalCashFlowPosting -> {
+                    CashFlowPosting cashFlowPosting = new CashFlowPosting();
+                    FinalCashFlowAccount source = finalCashFlowPosting.getSource();
+                    cashFlowPosting.setFromAccountId(source.getAccountId());
+                    cashFlowPosting.setFromAccountType(toAccountType(source.getAccountType()));
+                    FinalCashFlowAccount destination = finalCashFlowPosting.getDestination();
+                    cashFlowPosting.setToAccountId(destination.getAccountId());
+                    cashFlowPosting.setToAccountType(toAccountType(destination.getAccountType()));
+                    cashFlowPosting.setAmount(finalCashFlowPosting.getVolume().getAmount());
+                    cashFlowPosting.setCurrencyCode(finalCashFlowPosting.getVolume().getCurrency().getSymbolicCode());
+                    cashFlowPosting.setDescription(finalCashFlowPosting.getDetails());
+                    cashFlowPosting.setPayoutId(payoutId);
+                    return cashFlowPosting;
+                })
+                .collect(Collectors.toList());
+    }
+
+    private static PayoutStatus toThriftPayoutStatus(
             com.rbkmoney.payout.manager.domain.enums.PayoutStatus payoutStatus) {
         switch (payoutStatus) {
             case UNPAID:
@@ -52,20 +66,72 @@ public class ThriftUtil {
         }
     }
 
-    public static List<FinalCashFlowPosting> toThriftCashFlow(String cashFlow) {
-        List<FinalCashFlowPosting> finalCashFlowPostings = new ArrayList<>();
-        try {
-            for (JsonNode jsonNode : OBJECT_MAPPER.readTree(cashFlow)) {
-                FinalCashFlowPosting finalCashFlowPosting = jsonToTBase(jsonNode, FinalCashFlowPosting.class);
-                finalCashFlowPostings.add(finalCashFlowPosting);
-            }
-        } catch (IOException ex) {
-            throw new RuntimeJsonMappingException(ex.getMessage());
-        }
-        return finalCashFlowPostings;
+    private static List<FinalCashFlowPosting> toThriftCashFlows(List<CashFlowPosting> cashFlowPostings) {
+        return cashFlowPostings.stream()
+                .map(cfp -> new FinalCashFlowPosting(
+                        new FinalCashFlowAccount(toAccountType(cfp.getFromAccountType()), cfp.getFromAccountId()),
+                        new FinalCashFlowAccount(toAccountType(cfp.getToAccountType()), cfp.getToAccountId()),
+                        new Cash(cfp.getAmount(), new CurrencyRef(cfp.getCurrencyCode())))
+                        .setDetails(cfp.getDescription()))
+                .collect(Collectors.toList());
     }
 
-    public static <T extends TBase> T jsonToTBase(JsonNode jsonNode, Class<T> type) throws IOException {
-        return JSON_PROCESSOR.process(jsonNode, new TBaseHandler<>(type));
+    private static AccountType toAccountType(CashFlowAccount cashFlowAccount) {
+        var cashFlowAccountType = cashFlowAccount.getSetField();
+        switch (cashFlowAccountType) {
+            case SYSTEM:
+                if (cashFlowAccount.getSystem() == SystemCashFlowAccount.settlement) {
+                    return AccountType.SYSTEM_SETTLEMENT;
+                }
+                throw new IllegalArgumentException();
+            case EXTERNAL:
+                switch (cashFlowAccount.getExternal()) {
+                    case income:
+                        return AccountType.EXTERNAL_INCOME;
+                    case outcome:
+                        return AccountType.EXTERNAL_OUTCOME;
+                    default:
+                        throw new IllegalArgumentException();
+                }
+            case MERCHANT:
+                switch (cashFlowAccount.getMerchant()) {
+                    case settlement:
+                        return AccountType.MERCHANT_SETTLEMENT;
+                    case guarantee:
+                        return AccountType.MERCHANT_GUARANTEE;
+                    case payout:
+                        return AccountType.MERCHANT_PAYOUT;
+                    default:
+                        throw new IllegalArgumentException();
+                }
+            case PROVIDER:
+                if (cashFlowAccount.getProvider() == ProviderCashFlowAccount.settlement) {
+                    return AccountType.PROVIDER_SETTLEMENT;
+                }
+                throw new IllegalArgumentException();
+            default:
+                throw new IllegalArgumentException();
+        }
+    }
+
+    private static CashFlowAccount toAccountType(AccountType accountType) {
+        switch (accountType) {
+            case EXTERNAL_INCOME:
+                return CashFlowAccount.external(ExternalCashFlowAccount.income);
+            case EXTERNAL_OUTCOME:
+                return CashFlowAccount.external(ExternalCashFlowAccount.outcome);
+            case MERCHANT_PAYOUT:
+                return CashFlowAccount.merchant(MerchantCashFlowAccount.payout);
+            case MERCHANT_GUARANTEE:
+                return CashFlowAccount.merchant(MerchantCashFlowAccount.guarantee);
+            case MERCHANT_SETTLEMENT:
+                return CashFlowAccount.merchant(MerchantCashFlowAccount.settlement);
+            case SYSTEM_SETTLEMENT:
+                return CashFlowAccount.system(SystemCashFlowAccount.settlement);
+            case PROVIDER_SETTLEMENT:
+                return CashFlowAccount.provider(ProviderCashFlowAccount.settlement);
+            default:
+                throw new IllegalArgumentException();
+        }
     }
 }

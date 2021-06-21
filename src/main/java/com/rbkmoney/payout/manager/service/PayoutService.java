@@ -1,19 +1,15 @@
 package com.rbkmoney.payout.manager.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.RuntimeJsonMappingException;
 import com.rbkmoney.damsel.domain.Cash;
-import com.rbkmoney.damsel.domain.Contract;
 import com.rbkmoney.damsel.domain.FinalCashFlowPosting;
 import com.rbkmoney.damsel.domain.Party;
 import com.rbkmoney.damsel.shumpune.Balance;
 import com.rbkmoney.damsel.shumpune.Clock;
 import com.rbkmoney.dao.DaoException;
 import com.rbkmoney.geck.common.util.TypeUtil;
-import com.rbkmoney.geck.serializer.kit.json.JsonHandler;
-import com.rbkmoney.geck.serializer.kit.tbase.TBaseProcessor;
 import com.rbkmoney.payout.manager.dao.PayoutDao;
 import com.rbkmoney.payout.manager.domain.enums.PayoutStatus;
+import com.rbkmoney.payout.manager.domain.tables.pojos.CashFlowPosting;
 import com.rbkmoney.payout.manager.domain.tables.pojos.Payout;
 import com.rbkmoney.payout.manager.exception.InsufficientFundsException;
 import com.rbkmoney.payout.manager.exception.InvalidStateException;
@@ -27,13 +23,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
+
+import static com.rbkmoney.payout.manager.util.ThriftUtil.toDomainCashFlows;
 
 @Slf4j
 @Service
@@ -41,8 +37,8 @@ import java.util.stream.Collectors;
 public class PayoutService {
 
     private final ShumwayService shumwayService;
-
     private final PartyManagementService partyManagementService;
+    private final CashFlowPostingService cashFlowPostingService;
 
     private final PayoutDao payoutDao;
 
@@ -56,13 +52,13 @@ public class PayoutService {
         String payoutToolId = party.getShops().get(shopId).getPayoutToolId();
         LocalDateTime localDateTime = LocalDateTime.now(ZoneOffset.UTC);
         String createdAt = TypeUtil.temporalToString(localDateTime.toInstant(ZoneOffset.UTC));
-        List<FinalCashFlowPosting> cashFlowPostings = partyManagementService.computePayoutCashFlow(
+        List<FinalCashFlowPosting> finalCashFlowPostings = partyManagementService.computePayoutCashFlow(
                 partyId,
                 shopId,
                 cash,
                 payoutToolId,
                 createdAt);
-        Map<CashFlowType, Long> cashFlow = DamselUtil.parseCashFlow(cashFlowPostings);
+        Map<CashFlowType, Long> cashFlow = DamselUtil.parseCashFlow(finalCashFlowPostings);
         Long cashFlowAmount = cashFlow.getOrDefault(CashFlowType.PAYOUT_AMOUNT, 0L);
         Long cashFlowPayoutFee = cashFlow.getOrDefault(CashFlowType.PAYOUT_FIXED_FEE, 0L);
         Long cashFlowFee = cashFlow.getOrDefault(CashFlowType.FEE, 0L);
@@ -73,29 +69,62 @@ public class PayoutService {
                     String.format("Negative amount in payout cash flow, amount='%d', fee='%d'", amount, fee));
         }
         String payoutId = UUID.randomUUID().toString();
-        Payout payout = savePayout(
+        List<CashFlowPosting> cashFlowPostings = toDomainCashFlows(payoutId, finalCashFlowPostings);
+        cashFlowPostingService.save(cashFlowPostings);
+        Payout payout = save(
                 partyId,
                 shopId,
                 cash,
                 payoutToolId,
                 localDateTime,
-                cashFlowPostings,
                 amount,
                 fee,
                 payoutId);
         Clock clock = shumwayService.hold(payoutId, cashFlowPostings);
-        long accountId = party.getShops().get(shopId).getAccount().getSettlement();
-        validateBalance(payoutId, clock, accountId);
+        validateBalance(payoutId, clock, party, shopId);
         log.info("Payout has been created, payoutId='{}'", payoutId);
         return payout;
     }
 
-    public Payout get(String payoutId) {
-        log.info("Trying to get a payout, payoutId='{}'", payoutId);
+    @Transactional(propagation = Propagation.REQUIRED)
+    public Payout save(
+            String partyId,
+            String shopId,
+            Cash cash,
+            String payoutToolId,
+            LocalDateTime localDateTime,
+            long amount,
+            long fee,
+            String payoutId) {
         try {
-            return payoutDao.get(payoutId);
+            var payout = new Payout();
+            payout.setPayoutId(payoutId);
+            payout.setCreatedAt(localDateTime);
+            payout.setPartyId(partyId);
+            payout.setShopId(shopId);
+            payout.setStatus(com.rbkmoney.payout.manager.domain.enums.PayoutStatus.UNPAID);
+            payout.setPayoutToolId(payoutToolId);
+            payout.setAmount(amount);
+            payout.setFee(fee);
+            payout.setCurrencyCode(cash.getCurrency().getSymbolicCode());
+            payoutDao.save(payout);
+            return payout;
         } catch (DaoException ex) {
-            throw new StorageException(ex);
+            throw new StorageException(String.format("Failed to save Payout, payoutId='%s'", payoutId), ex);
+        }
+    }
+
+    public Payout get(String payoutId) {
+        log.info("Trying to get a Payout, payoutId='{}'", payoutId);
+        try {
+            Payout payout = payoutDao.get(payoutId);
+            if (payout == null) {
+                throw new NotFoundException(
+                        String.format("Payout not found, payoutId='%s'", payoutId));
+            }
+            return payout;
+        } catch (DaoException ex) {
+            throw new StorageException(String.format("Failed to get a Payout, payoutId='%s'", payoutId), ex);
         }
     }
 
@@ -149,49 +178,8 @@ public class PayoutService {
         }
     }
 
-    private Payout savePayout(
-            String partyId,
-            String shopId,
-            Cash cash,
-            String payoutToolId,
-            LocalDateTime localDateTime,
-            List<FinalCashFlowPosting> cashFlowPostings,
-            long amount,
-            long fee,
-            String payoutId) {
-        try {
-            var payout = new Payout();
-            payout.setPayoutId(payoutId);
-            payout.setCreatedAt(localDateTime);
-            payout.setPartyId(partyId);
-            payout.setShopId(shopId);
-            payout.setStatus(com.rbkmoney.payout.manager.domain.enums.PayoutStatus.UNPAID);
-            try {
-                payout.setCashFlow(new ObjectMapper().writeValueAsString(cashFlowPostings.stream()
-                        .map(cashFlowPosting -> {
-                            try {
-                                return new TBaseProcessor().process(cashFlowPosting, new JsonHandler());
-                            } catch (IOException ex) {
-                                throw new RuntimeJsonMappingException(ex.getMessage());
-                            }
-                        })
-                        .collect(Collectors.toList())
-                ));
-            } catch (IOException ex) {
-                throw new RuntimeException("Failed to write cash flow", ex);
-            }
-            payout.setPayoutToolId(payoutToolId);
-            payout.setAmount(amount);
-            payout.setFee(fee);
-            payout.setCurrencyCode(cash.getCurrency().getSymbolicCode());
-            payoutDao.save(payout);
-            return payout;
-        } catch (DaoException ex) {
-            throw new StorageException(ex);
-        }
-    }
-
-    private void validateBalance(String payoutId, Clock clock, long accountId) {
+    private void validateBalance(String payoutId, Clock clock, Party party, String shopId) {
+        long accountId = party.getShops().get(shopId).getAccount().getSettlement();
         Balance balance = shumwayService.getBalance(accountId, clock, payoutId);
         if (balance == null || balance.getMinAvailableAmount() < 0) {
             shumwayService.rollback(payoutId);

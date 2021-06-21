@@ -10,7 +10,6 @@ create table if not exists pm.payout
     party_id       varchar              not null,
     shop_id        varchar              not null,
     status         pm.payout_status not null,
-    cash_flow      varchar,
     payout_tool_id varchar,
     amount         bigint,
     fee            bigint default 0,
@@ -26,8 +25,6 @@ create table if not exists pm.cash_flow_posting
 (
     id                bigserial               not null,
     payout_id         varchar                 not null,
-    plan_id           varchar                 not null,
-    batch_id          bigint                  not null,
     from_account_id   bigint                  not null,
     from_account_type pm.account_type     not null,
     to_account_id     bigint                  not null,
