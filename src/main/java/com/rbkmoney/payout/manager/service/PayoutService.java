@@ -16,7 +16,6 @@ import com.rbkmoney.payout.manager.exception.InvalidStateException;
 import com.rbkmoney.payout.manager.exception.NotFoundException;
 import com.rbkmoney.payout.manager.exception.StorageException;
 import com.rbkmoney.payout.manager.util.CashFlowType;
-import com.rbkmoney.payout.manager.util.DamselUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.rbkmoney.payout.manager.util.ThriftUtil.parseCashFlow;
 import static com.rbkmoney.payout.manager.util.ThriftUtil.toDomainCashFlows;
 
 @Slf4j
@@ -58,7 +58,7 @@ public class PayoutService {
                 cash,
                 payoutToolId,
                 createdAt);
-        Map<CashFlowType, Long> cashFlow = DamselUtil.parseCashFlow(finalCashFlowPostings);
+        Map<CashFlowType, Long> cashFlow = parseCashFlow(finalCashFlowPostings);
         Long cashFlowAmount = cashFlow.getOrDefault(CashFlowType.PAYOUT_AMOUNT, 0L);
         Long cashFlowPayoutFee = cashFlow.getOrDefault(CashFlowType.PAYOUT_FIXED_FEE, 0L);
         Long cashFlowFee = cashFlow.getOrDefault(CashFlowType.FEE, 0L);
