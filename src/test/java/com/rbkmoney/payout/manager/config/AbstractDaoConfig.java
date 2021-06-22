@@ -1,5 +1,6 @@
-package com.rbkmoney.payout.manager;
+package com.rbkmoney.payout.manager.config;
 
+import com.rbkmoney.payout.manager.PayoutManagerApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.util.TestPropertyValues;
@@ -8,15 +9,19 @@ import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
+import java.util.UUID;
+
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @ContextConfiguration(classes = PayoutManagerApplication.class,
         initializers = AbstractDaoConfig.Initializer.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+@TestPropertySource("classpath:application.yml")
 @Testcontainers
 public abstract class AbstractDaoConfig {
 
@@ -40,4 +45,7 @@ public abstract class AbstractDaoConfig {
     @LocalServerPort
     protected int port;
 
+    public String generatePayoutId(){
+        return UUID.randomUUID().toString();
+    }
 }

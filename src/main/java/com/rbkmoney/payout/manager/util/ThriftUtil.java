@@ -67,7 +67,7 @@ public class ThriftUtil {
             case CONFIRMED:
                 return PayoutStatus.confirmed(new PayoutConfirmed());
             case CANCELLED:
-                return PayoutStatus.cancelled(new PayoutCancelled());
+                return PayoutStatus.cancelled(new PayoutCancelled("todo"));
             default:
                 throw new NotFoundException(String.format("Payout status not found, status = %s", payoutStatus));
         }

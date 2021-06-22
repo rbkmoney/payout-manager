@@ -1,6 +1,6 @@
 package com.rbkmoney.payout.manager.dao;
 
-import com.rbkmoney.payout.manager.AbstractDaoConfig;
+import com.rbkmoney.payout.manager.config.AbstractDaoConfig;
 import com.rbkmoney.payout.manager.domain.tables.pojos.Payout;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +14,7 @@ public class PayoutDaoTest extends AbstractDaoConfig {
     private PayoutDao payoutDao;
 
     @Test
-    public void testSaveAndGet()  {
+    public void testSaveAndGet() {
         Payout payout = random(Payout.class, "id");
         payout.setPayoutId("1");
         payout.setId(payoutDao.save(payout));
@@ -22,7 +22,6 @@ public class PayoutDaoTest extends AbstractDaoConfig {
         second.setId(null);
         second.setPayoutId("2");
         second.setId(payoutDao.save(second));
-
         assertEquals(
                 payout,
                 payoutDao.get(payout.getPayoutId()));

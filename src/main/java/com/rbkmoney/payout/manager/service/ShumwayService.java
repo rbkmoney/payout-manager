@@ -2,10 +2,8 @@ package com.rbkmoney.payout.manager.service;
 
 import com.rbkmoney.damsel.base.InvalidRequest;
 import com.rbkmoney.damsel.shumpune.*;
-import com.rbkmoney.payout.manager.dao.CashFlowPostingDao;
 import com.rbkmoney.payout.manager.domain.tables.pojos.CashFlowPosting;
 import com.rbkmoney.payout.manager.exception.AccounterException;
-import com.rbkmoney.payout.manager.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.thrift.TException;

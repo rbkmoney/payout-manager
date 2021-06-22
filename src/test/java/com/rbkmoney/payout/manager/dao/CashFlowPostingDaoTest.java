@@ -1,6 +1,6 @@
 package com.rbkmoney.payout.manager.dao;
 
-import com.rbkmoney.payout.manager.AbstractDaoConfig;
+import com.rbkmoney.payout.manager.config.AbstractDaoConfig;
 import com.rbkmoney.payout.manager.domain.tables.pojos.CashFlowPosting;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static io.github.benas.randombeans.api.EnhancedRandom.*;
+import static io.github.benas.randombeans.api.EnhancedRandom.randomStreamOf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class CashFlowPostingDaoTest extends AbstractDaoConfig {
@@ -17,7 +17,7 @@ public class CashFlowPostingDaoTest extends AbstractDaoConfig {
     private CashFlowPostingDao cashFlowPostingDao;
 
     @Test
-   public void testSaveAndGet() {
+    public void testSaveAndGet() {
         List<CashFlowPosting> cashFlowPostings = randomStreamOf(4, CashFlowPosting.class, "id")
                 .peek(cashFlowPosting -> cashFlowPosting.setPayoutId("1"))
                 .collect(Collectors.toList());
@@ -26,7 +26,6 @@ public class CashFlowPostingDaoTest extends AbstractDaoConfig {
                 .peek(cashFlowPosting -> cashFlowPosting.setPayoutId("2"))
                 .collect(Collectors.toList());
         cashFlowPostingDao.save(seconds);
-
         assertEquals(
                 cashFlowPostings.size(),
                 cashFlowPostingDao.getByPayoutId("1").size());
