@@ -321,6 +321,7 @@ public class PayoutServiceTest extends AbstractDaoConfig {
         verify(shumwayService, times(1)).rollback(anyString());
         verify(shumwayService, times(0)).revert(anyString());
     }
+
     @Test
     public void shouldCancelAfterConfirm() {
         Payout payout = random(Payout.class);
@@ -351,7 +352,7 @@ public class PayoutServiceTest extends AbstractDaoConfig {
     }
 
     @SneakyThrows
-    public <T extends TBase> T fillTBaseObject(T tBase, Class<T> type) {
-        return mockTBaseProcessor.process(tBase, new TBaseHandler<>(type));
+    public <T extends TBase> T fillTBaseObject(T value, Class<T> type) {
+        return mockTBaseProcessor.process(value, new TBaseHandler<>(type));
     }
 }

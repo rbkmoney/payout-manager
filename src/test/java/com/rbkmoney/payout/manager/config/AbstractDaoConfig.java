@@ -45,7 +45,7 @@ public abstract class AbstractDaoConfig {
     @LocalServerPort
     protected int port;
 
-    public String generatePayoutId(){
+    public String generatePayoutId() {
         return UUID.randomUUID().toString();
     }
 }
