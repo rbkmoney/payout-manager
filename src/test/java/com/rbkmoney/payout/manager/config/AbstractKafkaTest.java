@@ -1,7 +1,7 @@
 package com.rbkmoney.payout.manager.config;
 
 import com.rbkmoney.payout.manager.*;
-import com.rbkmoney.payout.manager.kafka.PayoutDeserializer;
+import com.rbkmoney.payout.manager.util.PayoutEventDeserializer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -21,12 +21,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Collections;
-import java.util.List;
 import java.util.Properties;
-import java.util.UUID;
 
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
@@ -64,7 +60,7 @@ public abstract class AbstractKafkaTest extends AbstractDaoConfig {
         }
 
         private <T> Consumer<String, T> initTopic(String topicName) {
-            Consumer<String, T> consumer = createConsumer(PayoutDeserializer.class);
+            Consumer<String, T> consumer = createConsumer(PayoutEventDeserializer.class);
             try {
                 consumer.subscribe(Collections.singletonList(topicName));
                 consumer.poll(Duration.ofMillis(100L));
@@ -84,14 +80,5 @@ public abstract class AbstractKafkaTest extends AbstractDaoConfig {
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "test");
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         return new KafkaConsumer<>(props);
-    }
-
-    public Event createEvent(PayoutChange payoutChange) {
-        Event message = new Event();
-        message.setId(1L);
-        message.setCreatedAt(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
-        message.setSource(EventSource.id(UUID.randomUUID().toString()));
-        message.setPayload(EventPayload.changes(List.of(payoutChange)));
-        return message;
     }
 }

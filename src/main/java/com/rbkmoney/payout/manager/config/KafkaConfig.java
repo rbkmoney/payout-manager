@@ -1,7 +1,7 @@
 package com.rbkmoney.payout.manager.config;
 
 import com.rbkmoney.kafka.common.serialization.ThriftSerializer;
-import com.rbkmoney.payout.manager.Payout;
+import com.rbkmoney.payout.manager.Event;
 import com.rbkmoney.payout.manager.config.properties.KafkaSslProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,11 +33,11 @@ public class KafkaConfig {
     private String bootstrapServers;
 
     @Bean
-    public KafkaTemplate<String, Payout> kafkaTemplate() {
+    public KafkaTemplate<String, Event> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
     }
 
-    private ProducerFactory<String, Payout> producerFactory() {
+    private ProducerFactory<String, Event> producerFactory() {
         Map<String, Object> config = new HashMap<>();
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);

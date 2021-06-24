@@ -12,6 +12,10 @@ public interface PayoutDao {
 
     long save(Payout payout) throws DaoException;
 
-    void changeStatus(String payoutId, PayoutStatus payoutStatus) throws DaoException;
+    default void changeStatus(String payoutId, PayoutStatus payoutStatus) throws DaoException {
+        changeStatus(payoutId, payoutStatus, null);
+    }
+
+    void changeStatus(String payoutId, PayoutStatus payoutStatus, String cancelDetails) throws DaoException;
 
 }

@@ -43,7 +43,7 @@ public class PayoutService {
     private final PayoutDao payoutDao;
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public Payout create(String partyId, String shopId, Cash cash) {
+    public String create(String partyId, String shopId, Cash cash) {
         log.info("Trying to create a payout, partyId='{}', shopId='{}'", partyId, shopId);
         if (cash.getAmount() <= 0) {
             throw new InsufficientFundsException("Available amount must be greater than 0");
@@ -69,9 +69,7 @@ public class PayoutService {
                     String.format("Negative amount in payout cash flow, amount='%d', fee='%d'", amount, fee));
         }
         String payoutId = UUID.randomUUID().toString();
-        List<CashFlowPosting> cashFlowPostings = toDomainCashFlows(payoutId, finalCashFlowPostings);
-        cashFlowPostingService.save(cashFlowPostings);
-        Payout payout = save(
+        save(
                 payoutId,
                 localDateTime,
                 partyId,
@@ -80,14 +78,16 @@ public class PayoutService {
                 amount,
                 fee,
                 cash.getCurrency().getSymbolicCode());
+        List<CashFlowPosting> cashFlowPostings = toDomainCashFlows(payoutId, finalCashFlowPostings);
+        cashFlowPostingService.save(cashFlowPostings);
         Clock clock = shumwayService.hold(payoutId, cashFlowPostings);
         validateBalance(payoutId, clock, party, shopId);
         log.info("Payout has been created, payoutId='{}'", payoutId);
-        return payout;
+        return payoutId;
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public Payout save(
+    public void save(
             String payoutId,
             LocalDateTime createdAt,
             String partyId,
@@ -109,7 +109,6 @@ public class PayoutService {
             payout.setFee(fee);
             payout.setCurrencyCode(symbolicCode);
             payoutDao.save(payout);
-            return payout;
         } catch (DaoException ex) {
             throw new StorageException(String.format("Failed to save Payout, payoutId='%s'", payoutId), ex);
         }
@@ -152,7 +151,7 @@ public class PayoutService {
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public void cancel(String payoutId) {
+    public void cancel(String payoutId, String details) {
         log.info("Trying to cancel a payout, payoutId='{}'", payoutId);
         try {
             Payout payout = getForUpdate(payoutId);
@@ -160,7 +159,7 @@ public class PayoutService {
                 log.info("Payout already cancelled, payoutId='{}'", payoutId);
                 return;
             }
-            payoutDao.changeStatus(payoutId, PayoutStatus.CANCELLED);
+            payoutDao.changeStatus(payoutId, PayoutStatus.CANCELLED, details);
             switch (payout.getStatus()) {
                 case UNPAID:
                 case PAID:

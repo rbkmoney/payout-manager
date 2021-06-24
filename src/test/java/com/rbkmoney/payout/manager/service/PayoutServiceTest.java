@@ -17,7 +17,6 @@ import lombok.SneakyThrows;
 import org.apache.thrift.TBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.internal.matchers.apachecommons.ReflectionEquals;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
@@ -31,6 +30,8 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 public class PayoutServiceTest extends AbstractDaoConfig {
+
+    private static final String DETAILS = "details";
 
     @MockBean
     private ShumwayService shumwayService;
@@ -90,11 +91,11 @@ public class PayoutServiceTest extends AbstractDaoConfig {
         Balance returnedBalance = fillTBaseObject(balance, Balance.class);
         returnedBalance.setMinAvailableAmount(1L);
         when(shumwayService.getBalance(any(), any(), anyString())).thenReturn(returnedBalance);
-        Payout payout = payoutService.create(
+        String payoutId = payoutService.create(
                 partyId,
                 shopId,
                 new Cash(100L, new CurrencyRef("RUB")));
-        assertTrue(new ReflectionEquals(payout, "id").matches(payoutService.get(payout.getPayoutId())));
+        Payout payout = payoutService.get(payoutId);
         assertEquals(4L, payout.getAmount());
         assertEquals(2L, payout.getFee());
         assertEquals(PayoutStatus.UNPAID, payout.getStatus());
@@ -229,7 +230,7 @@ public class PayoutServiceTest extends AbstractDaoConfig {
     @Test
     public void shouldSaveAndGet() {
         Payout payout = random(Payout.class);
-        Payout savedPayout = payoutService.save(
+        payoutService.save(
                 payout.getPayoutId(),
                 payout.getCreatedAt(),
                 payout.getPartyId(),
@@ -238,8 +239,6 @@ public class PayoutServiceTest extends AbstractDaoConfig {
                 payout.getAmount(),
                 payout.getFee(),
                 payout.getCurrencyCode());
-        assertTrue(new ReflectionEquals(savedPayout, "id")
-                .matches(payoutService.get(payout.getPayoutId())));
         assertEquals(PayoutStatus.UNPAID, payoutService.get(payout.getPayoutId()).getStatus());
     }
 
@@ -292,7 +291,7 @@ public class PayoutServiceTest extends AbstractDaoConfig {
                 payout.getCurrencyCode());
         doNothing().when(shumwayService).commit(anyString());
         doNothing().when(shumwayService).rollback(anyString());
-        payoutService.cancel(payout.getPayoutId());
+        payoutService.cancel(payout.getPayoutId(), DETAILS);
         assertEquals(PayoutStatus.CANCELLED, payoutService.get(payout.getPayoutId()).getStatus());
         assertThrows(
                 InvalidStateException.class,
@@ -312,11 +311,11 @@ public class PayoutServiceTest extends AbstractDaoConfig {
                 payout.getFee(),
                 payout.getCurrencyCode());
         doNothing().when(shumwayService).rollback(anyString());
-        payoutService.cancel(payout.getPayoutId());
+        payoutService.cancel(payout.getPayoutId(), DETAILS);
         assertEquals(PayoutStatus.CANCELLED, payoutService.get(payout.getPayoutId()).getStatus());
         verify(shumwayService, times(1)).rollback(anyString());
         verify(shumwayService, times(0)).revert(anyString());
-        payoutService.cancel(payout.getPayoutId());
+        payoutService.cancel(payout.getPayoutId(), DETAILS);
         assertEquals(PayoutStatus.CANCELLED, payoutService.get(payout.getPayoutId()).getStatus());
         verify(shumwayService, times(1)).rollback(anyString());
         verify(shumwayService, times(0)).revert(anyString());
@@ -338,7 +337,7 @@ public class PayoutServiceTest extends AbstractDaoConfig {
         payoutService.confirm(payout.getPayoutId());
         assertEquals(PayoutStatus.CONFIRMED, payoutService.get(payout.getPayoutId()).getStatus());
         doNothing().when(shumwayService).revert(anyString());
-        payoutService.cancel(payout.getPayoutId());
+        payoutService.cancel(payout.getPayoutId(), DETAILS);
         assertEquals(PayoutStatus.CANCELLED, payoutService.get(payout.getPayoutId()).getStatus());
         verify(shumwayService, times(0)).rollback(anyString());
         verify(shumwayService, times(1)).revert(anyString());
@@ -348,7 +347,7 @@ public class PayoutServiceTest extends AbstractDaoConfig {
     public void shouldThrowExceptionAtCancelWhenPayoutNotFound() {
         assertThrows(
                 NotFoundException.class,
-                () -> payoutService.cancel(generatePayoutId()));
+                () -> payoutService.cancel(generatePayoutId(), DETAILS));
     }
 
     @SneakyThrows

@@ -18,19 +18,21 @@ public class CashFlowPostingDaoTest extends AbstractDaoConfig {
 
     @Test
     public void testSaveAndGet() {
+        String payoutId = generatePayoutId();
         List<CashFlowPosting> cashFlowPostings = randomStreamOf(4, CashFlowPosting.class, "id")
-                .peek(cashFlowPosting -> cashFlowPosting.setPayoutId("1"))
+                .peek(cashFlowPosting -> cashFlowPosting.setPayoutId(payoutId))
                 .collect(Collectors.toList());
         cashFlowPostingDao.save(cashFlowPostings);
+        String second = generatePayoutId();
         List<CashFlowPosting> seconds = randomStreamOf(5, CashFlowPosting.class, "id")
-                .peek(cashFlowPosting -> cashFlowPosting.setPayoutId("2"))
+                .peek(cashFlowPosting -> cashFlowPosting.setPayoutId(second))
                 .collect(Collectors.toList());
         cashFlowPostingDao.save(seconds);
         assertEquals(
                 cashFlowPostings.size(),
-                cashFlowPostingDao.getByPayoutId("1").size());
+                cashFlowPostingDao.getByPayoutId(payoutId).size());
         assertEquals(
                 seconds.size(),
-                cashFlowPostingDao.getByPayoutId("2").size());
+                cashFlowPostingDao.getByPayoutId(second).size());
     }
 }

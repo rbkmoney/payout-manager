@@ -7,6 +7,7 @@ import com.rbkmoney.payout.manager.domain.enums.AccountType;
 import com.rbkmoney.payout.manager.domain.tables.pojos.CashFlowPosting;
 import com.rbkmoney.payout.manager.exception.NotFoundException;
 
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
@@ -20,15 +21,35 @@ public class ThriftUtil {
                         Collectors.summingLong(cashFlow -> cashFlow.getVolume().getAmount())));
     }
 
+    public static Event createEvent(
+            com.rbkmoney.payout.manager.domain.tables.pojos.Payout payout,
+            List<CashFlowPosting> cashFlowPostings) {
+        Integer sequenceId = payout.getSequenceId();
+        PayoutChange payoutChange;
+        if (sequenceId == 0) {
+            payoutChange = PayoutChange.created(
+                    new PayoutCreated(toThriftPayout(payout, cashFlowPostings)));
+        } else {
+            payoutChange = PayoutChange.status_changed(
+                    new PayoutStatusChanged(
+                            toThriftPayoutStatus(payout.getStatus(), payout.getCancelDetails())));
+        }
+        return new Event()
+                .setPayoutId(payout.getPayoutId())
+                .setSequenceId(sequenceId)
+                .setCreatedAt(TypeUtil.temporalToString(LocalDateTime.now(ZoneOffset.UTC).toInstant(ZoneOffset.UTC)))
+                .setPayoutChange(payoutChange);
+    }
+
     public static Payout toThriftPayout(
             com.rbkmoney.payout.manager.domain.tables.pojos.Payout payout,
             List<CashFlowPosting> cashFlowPostings) {
         return new Payout()
-                .setId(payout.getPayoutId())
+                .setPayoutId(payout.getPayoutId())
                 .setCreatedAt(TypeUtil.temporalToString(payout.getCreatedAt().toInstant(ZoneOffset.UTC)))
                 .setPartyId(payout.getPartyId())
                 .setShopId(payout.getShopId())
-                .setStatus(toThriftPayoutStatus(payout.getStatus()))
+                .setStatus(toThriftPayoutStatus(payout.getStatus(), payout.getCancelDetails()))
                 .setCashFlow(toThriftCashFlows(cashFlowPostings))
                 .setPayoutToolId(payout.getPayoutToolId())
                 .setAmount(payout.getAmount())
@@ -58,7 +79,8 @@ public class ThriftUtil {
     }
 
     private static PayoutStatus toThriftPayoutStatus(
-            com.rbkmoney.payout.manager.domain.enums.PayoutStatus payoutStatus) {
+            com.rbkmoney.payout.manager.domain.enums.PayoutStatus payoutStatus,
+            String cancelDetails) {
         switch (payoutStatus) {
             case UNPAID:
                 return PayoutStatus.unpaid(new PayoutUnpaid());
@@ -67,7 +89,7 @@ public class ThriftUtil {
             case CONFIRMED:
                 return PayoutStatus.confirmed(new PayoutConfirmed());
             case CANCELLED:
-                return PayoutStatus.cancelled(new PayoutCancelled("todo"));
+                return PayoutStatus.cancelled(new PayoutCancelled(cancelDetails));
             default:
                 throw new NotFoundException(String.format("Payout status not found, status = %s", payoutStatus));
         }

@@ -1,10 +1,7 @@
 package com.rbkmoney.payout.manager.handler;
 
 import com.rbkmoney.damsel.base.InvalidRequest;
-import com.rbkmoney.payout.manager.InsufficientFunds;
-import com.rbkmoney.payout.manager.Payout;
-import com.rbkmoney.payout.manager.PayoutNotFound;
-import com.rbkmoney.payout.manager.PayoutParams;
+import com.rbkmoney.payout.manager.*;
 import com.rbkmoney.payout.manager.domain.tables.pojos.CashFlowPosting;
 import com.rbkmoney.payout.manager.exception.InsufficientFundsException;
 import com.rbkmoney.payout.manager.exception.InvalidStateException;
@@ -32,14 +29,12 @@ public class PayoutManagementHandler implements com.rbkmoney.payout.manager.Payo
     @Override
     public Payout createPayout(PayoutParams payoutParams) throws InsufficientFunds, InvalidRequest, TException {
         try {
-            var payout = payoutService.create(
+            String payoutId = payoutService.create(
                     payoutParams.getShopParams().getPartyId(),
                     payoutParams.getShopParams().getShopId(),
                     payoutParams.getCash());
-            List<CashFlowPosting> cashFlowPostings = cashFlowPostingService.getCashFlowPostings(payout.getPayoutId());
-            Payout thriftPayout = ThriftUtil.toThriftPayout(payout, cashFlowPostings);
-            payoutKafkaProducerService.send(thriftPayout);
-            return thriftPayout;
+            sendToKafka(payoutId);
+            return getPayout(payoutId);
         } catch (InsufficientFundsException ex) {
             throw new InsufficientFunds();
         }
@@ -69,7 +64,7 @@ public class PayoutManagementHandler implements com.rbkmoney.payout.manager.Payo
     @Override
     public void cancelPayout(String payoutId, String details) throws InvalidRequest, TException {
         try {
-            payoutService.cancel(payoutId);
+            payoutService.cancel(payoutId, details);
             sendToKafka(payoutId);
         } catch (InvalidStateException ex) {
             throw new InvalidRequest(List.of(ex.getMessage()));
@@ -79,7 +74,7 @@ public class PayoutManagementHandler implements com.rbkmoney.payout.manager.Payo
     private void sendToKafka(String payoutId) {
         var payout = payoutService.get(payoutId);
         List<CashFlowPosting> cashFlowPostings = cashFlowPostingService.getCashFlowPostings(payoutId);
-        Payout thriftPayout = ThriftUtil.toThriftPayout(payout, cashFlowPostings);
-        payoutKafkaProducerService.send(thriftPayout);
+        Event event = ThriftUtil.createEvent(payout, cashFlowPostings);
+        payoutKafkaProducerService.send(event);
     }
 }

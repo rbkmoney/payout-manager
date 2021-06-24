@@ -28,6 +28,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.rbkmoney.payout.manager.config.AbstractDaoConfig.generatePayoutId;
 import static io.github.benas.randombeans.api.EnhancedRandom.random;
 import static io.github.benas.randombeans.api.EnhancedRandom.randomStreamOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -59,10 +60,12 @@ public class PayoutManagementHandlerTest {
 
     @Test
     public void shouldCreate() throws TException {
+        String payoutId = generatePayoutId();
+        when(payoutService.create(anyString(), anyString(), any())).thenReturn(payoutId);
         Payout payout = random(Payout.class);
-        when(payoutService.create(anyString(), anyString(), any())).thenReturn(payout);
+        when(payoutService.get(eq(payoutId))).thenReturn(payout);
         List<CashFlowPosting> cashFlowPostings = randomStreamOf(4, CashFlowPosting.class, "id")
-                .peek(cashFlowPosting -> cashFlowPosting.setPayoutId(payout.getPayoutId()))
+                .peek(cashFlowPosting -> cashFlowPosting.setPayoutId(payoutId))
                 .collect(Collectors.toList());
         when(cashFlowPostingService.getCashFlowPostings(anyString())).thenReturn(cashFlowPostings);
         doNothing().when(payoutKafkaProducerService).send(any());
@@ -85,8 +88,14 @@ public class PayoutManagementHandlerTest {
 
     @Test
     public void shouldThrowExceptionAtCreateWhenKafkaIssue() {
+        String payoutId = generatePayoutId();
+        when(payoutService.create(anyString(), anyString(), any())).thenReturn(payoutId);
         Payout payout = random(Payout.class);
-        when(payoutService.create(anyString(), anyString(), any())).thenReturn(payout);
+        when(payoutService.get(eq(payoutId))).thenReturn(payout);
+        List<CashFlowPosting> cashFlowPostings = randomStreamOf(4, CashFlowPosting.class, "id")
+                .peek(cashFlowPosting -> cashFlowPosting.setPayoutId(payoutId))
+                .collect(Collectors.toList());
+        when(cashFlowPostingService.getCashFlowPostings(anyString())).thenReturn(cashFlowPostings);
         doThrow(KafkaProduceException.class).when(payoutKafkaProducerService).send(any());
         PayoutParams payoutParams = new PayoutParams(
                 new ShopParams("partyId", "shopId"),

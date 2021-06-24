@@ -1,9 +1,10 @@
 package com.rbkmoney.payout.manager.service;
 
+import com.rbkmoney.payout.manager.Event;
 import com.rbkmoney.payout.manager.config.AbstractKafkaTest;
 import com.rbkmoney.payout.manager.domain.tables.pojos.CashFlowPosting;
 import com.rbkmoney.payout.manager.domain.tables.pojos.Payout;
-import com.rbkmoney.payout.manager.kafka.PayoutDeserializer;
+import com.rbkmoney.payout.manager.util.PayoutEventDeserializer;
 import com.rbkmoney.payout.manager.util.ThriftUtil;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -35,21 +36,22 @@ public class PayoutKafkaProducerServiceTest extends AbstractKafkaTest {
         for (int i = 0; i < expected; i++) {
             Payout payout = random(Payout.class);
             payout.setPayoutId(String.valueOf(i));
+            payout.setSequenceId(i);
             List<CashFlowPosting> cashFlowPostings = randomStreamOf(4, CashFlowPosting.class)
                     .peek(cashFlowPosting -> cashFlowPosting.setPayoutId(payout.getPayoutId()))
                     .collect(Collectors.toList());
-            var thriftPayout = ThriftUtil.toThriftPayout(payout, cashFlowPostings);
-            payoutKafkaProducerService.send(thriftPayout);
+            Event event = ThriftUtil.createEvent(payout, cashFlowPostings);
+            payoutKafkaProducerService.send(event);
         }
-        Consumer<String, com.rbkmoney.payout.manager.Payout> consumer = createConsumer(PayoutDeserializer.class);
+        Consumer<String, Event> consumer = createConsumer(PayoutEventDeserializer.class);
         consumer.subscribe(List.of(topicName));
-        ConsumerRecords<String, com.rbkmoney.payout.manager.Payout> poll = consumer.poll(Duration.ofMillis(5000));
+        ConsumerRecords<String, Event> poll = consumer.poll(Duration.ofMillis(5000));
         assertEquals(expected, poll.count());
-        Iterable<ConsumerRecord<String, com.rbkmoney.payout.manager.Payout>> records = poll.records(topicName);
-        List<com.rbkmoney.payout.manager.Payout> thriftPayouts = new ArrayList<>();
-        records.forEach(consumerRecord -> thriftPayouts.add(consumerRecord.value()));
+        Iterable<ConsumerRecord<String, Event>> records = poll.records(topicName);
+        List<Event> events = new ArrayList<>();
+        records.forEach(consumerRecord -> events.add(consumerRecord.value()));
         for (int i = 0; i < expected; i++) {
-            assertEquals(String.valueOf(i), thriftPayouts.get(i).getId());
+            assertEquals(String.valueOf(i), events.get(i).getPayoutId());
         }
     }
 }
