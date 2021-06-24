@@ -14,6 +14,8 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 import static com.rbkmoney.payout.manager.domain.tables.Payout.PAYOUT;
 
 @Component
@@ -52,7 +54,9 @@ public class PayoutDaoImpl extends AbstractGenericDao implements PayoutDao {
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
         executeOne(query, keyHolder);
-        return keyHolder.getKey().longValue();
+        return Optional.ofNullable(keyHolder.getKey())
+                .map(Number::longValue)
+                .orElseThrow();
     }
 
     @Override
