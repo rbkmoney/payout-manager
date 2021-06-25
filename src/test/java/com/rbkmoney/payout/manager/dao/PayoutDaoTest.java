@@ -41,6 +41,7 @@ public class PayoutDaoTest extends AbstractDaoConfig {
     public void shouldIncrementSequenceIdAtChangeStatus() {
         Payout payout = random(Payout.class, "id", "sequenceId");
         payout.setPayoutId(generatePayoutId());
+        payout.setSequenceId(0);
         payoutDao.save(payout);
         assertEquals(0, payoutDao.get(payout.getPayoutId()).getSequenceId());
         payoutDao.changeStatus(payout.getPayoutId(), PayoutStatus.UNPAID);

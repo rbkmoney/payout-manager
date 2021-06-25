@@ -59,10 +59,13 @@ public class ThriftUtil {
 
     public static List<CashFlowPosting> toDomainCashFlows(
             String payoutId,
+            LocalDateTime createdAt,
             List<FinalCashFlowPosting> cashFlowPostings) {
         return cashFlowPostings.stream()
                 .map(finalCashFlowPosting -> {
                     CashFlowPosting cashFlowPosting = new CashFlowPosting();
+                    cashFlowPosting.setPayoutId(payoutId);
+                    cashFlowPosting.setCreatedAt(createdAt);
                     FinalCashFlowAccount source = finalCashFlowPosting.getSource();
                     cashFlowPosting.setFromAccountId(source.getAccountId());
                     cashFlowPosting.setFromAccountType(toAccountType(source.getAccountType()));
@@ -72,7 +75,6 @@ public class ThriftUtil {
                     cashFlowPosting.setAmount(finalCashFlowPosting.getVolume().getAmount());
                     cashFlowPosting.setCurrencyCode(finalCashFlowPosting.getVolume().getCurrency().getSymbolicCode());
                     cashFlowPosting.setDescription(finalCashFlowPosting.getDetails());
-                    cashFlowPosting.setPayoutId(payoutId);
                     return cashFlowPosting;
                 })
                 .collect(Collectors.toList());

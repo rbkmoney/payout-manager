@@ -78,7 +78,7 @@ public class PayoutService {
                 amount,
                 fee,
                 cash.getCurrency().getSymbolicCode());
-        List<CashFlowPosting> cashFlowPostings = toDomainCashFlows(payoutId, finalCashFlowPostings);
+        List<CashFlowPosting> cashFlowPostings = toDomainCashFlows(payoutId, localDateTime, finalCashFlowPostings);
         cashFlowPostingService.save(cashFlowPostings);
         Clock clock = shumwayService.hold(payoutId, cashFlowPostings);
         validateBalance(payoutId, clock, party, shopId);
@@ -99,11 +99,12 @@ public class PayoutService {
         log.info("Trying to save a Payout, payoutId='{}'", payoutId);
         try {
             var payout = new Payout();
+            payout.setSequenceId(0);
             payout.setPayoutId(payoutId);
             payout.setCreatedAt(createdAt);
             payout.setPartyId(partyId);
             payout.setShopId(shopId);
-            payout.setStatus(com.rbkmoney.payout.manager.domain.enums.PayoutStatus.UNPAID);
+            payout.setStatus(PayoutStatus.UNPAID);
             payout.setPayoutToolId(payoutToolId);
             payout.setAmount(amount);
             payout.setFee(fee);
