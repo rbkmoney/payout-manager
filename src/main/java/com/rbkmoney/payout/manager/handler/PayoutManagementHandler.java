@@ -5,6 +5,7 @@ import com.rbkmoney.payout.manager.*;
 import com.rbkmoney.payout.manager.domain.tables.pojos.CashFlowPosting;
 import com.rbkmoney.payout.manager.exception.InsufficientFundsException;
 import com.rbkmoney.payout.manager.exception.InvalidRequestException;
+import com.rbkmoney.payout.manager.exception.InvalidStateException;
 import com.rbkmoney.payout.manager.exception.NotFoundException;
 import com.rbkmoney.payout.manager.service.CashFlowPostingService;
 import com.rbkmoney.payout.manager.service.PayoutKafkaProducerService;
@@ -60,7 +61,7 @@ public class PayoutManagementHandler implements com.rbkmoney.payout.manager.Payo
         try {
             payoutService.confirm(payoutId);
             sendToKafka(payoutId);
-        } catch (InvalidRequestException ex) {
+        } catch (InvalidStateException ex) {
             throw new InvalidRequest(
                     Optional.ofNullable(ex.getMessage()).map(List::of).orElse(List.of()));
         }
@@ -71,7 +72,7 @@ public class PayoutManagementHandler implements com.rbkmoney.payout.manager.Payo
         try {
             payoutService.cancel(payoutId, details);
             sendToKafka(payoutId);
-        } catch (InvalidRequestException ex) {
+        } catch (InvalidStateException ex) {
             throw new InvalidRequest(
                     Optional.ofNullable(ex.getMessage()).map(List::of).orElse(List.of()));
         }
