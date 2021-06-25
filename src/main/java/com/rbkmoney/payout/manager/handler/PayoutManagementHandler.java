@@ -15,7 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.thrift.TException;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,7 +40,7 @@ public class PayoutManagementHandler implements com.rbkmoney.payout.manager.Payo
             throw new InsufficientFunds();
         } catch (InvalidRequestException ex) {
             throw new InvalidRequest(
-                    Optional.ofNullable(ex.getMessage()).map(List::of).orElse(Collections.emptyList()));
+                    Optional.ofNullable(ex.getMessage()).map(List::of).orElse(List.of()));
         }
     }
 
@@ -74,7 +73,7 @@ public class PayoutManagementHandler implements com.rbkmoney.payout.manager.Payo
             sendToKafka(payoutId);
         } catch (InvalidRequestException ex) {
             throw new InvalidRequest(
-                    Optional.ofNullable(ex.getMessage()).map(List::of).orElse(Collections.emptyList()));
+                    Optional.ofNullable(ex.getMessage()).map(List::of).orElse(List.of()));
         }
     }
 
