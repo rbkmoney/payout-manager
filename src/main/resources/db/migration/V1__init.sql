@@ -11,7 +11,7 @@ create table if not exists pm.payout
     party_id       varchar                     not null,
     shop_id        varchar                     not null,
     status         pm.payout_status            not null,
-    payout_tool_id varchar,
+    payout_tool_id varchar                     not null,
     amount         bigint                      not null,
     fee            bigint                      not null default 0,
     currency_code  varchar                     not null,

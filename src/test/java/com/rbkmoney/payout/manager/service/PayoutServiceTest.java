@@ -11,6 +11,7 @@ import com.rbkmoney.payout.manager.config.AbstractDaoConfig;
 import com.rbkmoney.payout.manager.domain.enums.PayoutStatus;
 import com.rbkmoney.payout.manager.domain.tables.pojos.Payout;
 import com.rbkmoney.payout.manager.exception.InsufficientFundsException;
+import com.rbkmoney.payout.manager.exception.InvalidRequestException;
 import com.rbkmoney.payout.manager.exception.InvalidStateException;
 import com.rbkmoney.payout.manager.exception.NotFoundException;
 import lombok.SneakyThrows;
@@ -136,6 +137,27 @@ public class PayoutServiceTest extends AbstractDaoConfig {
                 .thenThrow(NotFoundException.class);
         assertThrows(
                 NotFoundException.class,
+                () -> payoutService.create(
+                        partyId,
+                        shopId,
+                        new Cash(100L, new CurrencyRef("RUB"))));
+    }
+
+    @Test
+    public void shouldThrowExceptionAtCreateWhenPayoutToolIdIsNull() {
+        String partyId = "partyId";
+        Party party = new Party();
+        Party returnedParty = fillTBaseObject(party, Party.class);
+        returnedParty.setId(partyId);
+        String shopId = "shopId";
+        Shop shop = new Shop();
+        Shop returnedShop = fillTBaseObject(shop, Shop.class);
+        returnedShop.setId(shopId);
+        returnedShop.setPayoutToolId(null);
+        returnedParty.setShops(Map.of(shopId, returnedShop));
+        when(partyManagementService.getParty(eq(partyId))).thenReturn(returnedParty);
+        assertThrows(
+                InvalidRequestException.class,
                 () -> payoutService.create(
                         partyId,
                         shopId,

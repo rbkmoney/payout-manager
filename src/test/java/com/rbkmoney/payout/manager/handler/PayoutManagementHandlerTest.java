@@ -1,5 +1,6 @@
 package com.rbkmoney.payout.manager.handler;
 
+import com.rbkmoney.damsel.base.InvalidRequest;
 import com.rbkmoney.damsel.domain.Cash;
 import com.rbkmoney.damsel.domain.CurrencyRef;
 import com.rbkmoney.kafka.common.exception.KafkaProduceException;
@@ -9,6 +10,7 @@ import com.rbkmoney.payout.manager.ShopParams;
 import com.rbkmoney.payout.manager.domain.tables.pojos.CashFlowPosting;
 import com.rbkmoney.payout.manager.domain.tables.pojos.Payout;
 import com.rbkmoney.payout.manager.exception.InsufficientFundsException;
+import com.rbkmoney.payout.manager.exception.InvalidRequestException;
 import com.rbkmoney.payout.manager.service.CashFlowPostingService;
 import com.rbkmoney.payout.manager.service.PayoutKafkaProducerService;
 import com.rbkmoney.payout.manager.service.PayoutService;
@@ -83,6 +85,17 @@ public class PayoutManagementHandlerTest {
                 new Cash(100L, new CurrencyRef("RUB")));
         assertThrows(
                 InsufficientFunds.class,
+                () -> payoutManagementHandler.createPayout(payoutParams));
+    }
+
+    @Test
+    public void shouldThrowExceptionAtCreateWhenPayoutToolIdIsNull() {
+        when(payoutService.create(anyString(), anyString(), any())).thenThrow(InvalidRequestException.class);
+        PayoutParams payoutParams = new PayoutParams(
+                new ShopParams("partyId", "shopId"),
+                new Cash(100L, new CurrencyRef("RUB")));
+        assertThrows(
+                InvalidRequest.class,
                 () -> payoutManagementHandler.createPayout(payoutParams));
     }
 
