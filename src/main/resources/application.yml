@@ -70,7 +70,7 @@ kafka:
     trust-store-location: changeit
     trust-store-password: changeit
   topic:
-    payout:
-      name: payout
+    pm-events-payout:
+      name: pm-events-payout
       produce:
         enabled: false

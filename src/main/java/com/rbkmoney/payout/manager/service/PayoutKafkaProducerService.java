@@ -16,10 +16,10 @@ public class PayoutKafkaProducerService {
 
     private final KafkaTemplate<String, Event> kafkaTemplate;
 
-    @Value("${kafka.topic.payout.name}")
+    @Value("${kafka.topic.pm-events-payout.name}")
     private String topicName;
 
-    @Value("${kafka.topic.payout.produce.enabled}")
+    @Value("${kafka.topic.pm-events-payout.produce.enabled}")
     private boolean producerEnabled;
 
     public void send(Event event) {
@@ -32,7 +32,6 @@ public class PayoutKafkaProducerService {
         try {
             log.info("Try to send payout data to kafka: topicName={}, payoutId={}",
                     topicName, event.getPayoutId());
-
             kafkaTemplate.send(topicName, event.getPayoutId(), event).get();
             log.info("Payout data to kafka was sent: topicName={}, payoutId={}",
                     topicName, event.getPayoutId());

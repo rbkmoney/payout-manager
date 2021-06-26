@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class PayoutKafkaProducerServiceTest extends AbstractKafkaTest {
 
-    @Value("${kafka.topic.payout.name}")
+    @Value("${kafka.topic.pm-events-payout.name}")
     private String topicName;
 
     @Autowired

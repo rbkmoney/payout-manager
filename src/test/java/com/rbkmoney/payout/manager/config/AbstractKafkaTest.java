@@ -1,6 +1,6 @@
 package com.rbkmoney.payout.manager.config;
 
-import com.rbkmoney.payout.manager.*;
+import com.rbkmoney.payout.manager.PayoutManagerApplication;
 import com.rbkmoney.payout.manager.util.PayoutEventDeserializer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -37,7 +37,6 @@ public abstract class AbstractKafkaTest extends AbstractDaoConfig {
 
     private static final String CONFLUENT_IMAGE_NAME = "confluentinc/cp-kafka";
     private static final String CONFLUENT_PLATFORM_VERSION = "latest";
-    private static final String TOPIC_NAME = "payout";
 
     @Value("${kafka.bootstrap-servers}")
     private String bootstrapServers;
@@ -50,13 +49,15 @@ public abstract class AbstractKafkaTest extends AbstractDaoConfig {
     public static class Initializer extends ConfigDataApplicationContextInitializer {
 
         @Override
-        public void initialize(ConfigurableApplicationContext configurableApplicationContext) {
+        public void initialize(ConfigurableApplicationContext applicationContext) {
             TestPropertyValues
                     .of("kafka.bootstrap-servers=" + kafka.getBootstrapServers(),
                             "kafka.ssl.enabled=false",
-                            "kafka.topic.payout.produce.enabled=true")
-                    .applyTo(configurableApplicationContext);
-            initTopic(TOPIC_NAME);
+                            "kafka.topic.pm-events-payout.produce.enabled=true")
+                    .applyTo(applicationContext);
+            initTopic(
+                    applicationContext.getEnvironment()
+                            .getProperty("kafka.topic.pm-events-payout.name"));
         }
 
         private <T> Consumer<String, T> initTopic(String topicName) {
