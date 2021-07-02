@@ -38,7 +38,8 @@ public class ThriftUtil {
                 .setPayoutId(payout.getPayoutId())
                 .setSequenceId(sequenceId)
                 .setCreatedAt(TypeUtil.temporalToString(LocalDateTime.now(ZoneOffset.UTC).toInstant(ZoneOffset.UTC)))
-                .setPayoutChange(payoutChange);
+                .setPayoutChange(payoutChange)
+                .setPayout(toThriftPayout(payout, cashFlowPostings));
     }
 
     public static Payout toThriftPayout(

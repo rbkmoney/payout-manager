@@ -29,11 +29,11 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @Slf4j
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ContextConfiguration(classes = PayoutManagerApplication.class,
-        initializers = AbstractKafkaTest.Initializer.class)
+        initializers = AbstractKafkaConfig.Initializer.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @TestPropertySource("classpath:application.yml")
 @Testcontainers
-public abstract class AbstractKafkaTest extends AbstractDaoConfig {
+public abstract class AbstractKafkaConfig extends AbstractDaoConfig {
 
     private static final String CONFLUENT_IMAGE_NAME = "confluentinc/cp-kafka";
     private static final String CONFLUENT_PLATFORM_VERSION = "latest";

@@ -1,7 +1,7 @@
 package com.rbkmoney.payout.manager.service;
 
 import com.rbkmoney.payout.manager.Event;
-import com.rbkmoney.payout.manager.config.AbstractKafkaTest;
+import com.rbkmoney.payout.manager.config.AbstractKafkaConfig;
 import com.rbkmoney.payout.manager.domain.tables.pojos.CashFlowPosting;
 import com.rbkmoney.payout.manager.domain.tables.pojos.Payout;
 import com.rbkmoney.payout.manager.util.PayoutEventDeserializer;
@@ -22,7 +22,7 @@ import static io.github.benas.randombeans.api.EnhancedRandom.random;
 import static io.github.benas.randombeans.api.EnhancedRandom.randomStreamOf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class PayoutKafkaProducerServiceTest extends AbstractKafkaTest {
+public class PayoutKafkaProducerServiceTest extends AbstractKafkaConfig {
 
     @Value("${kafka.topic.pm-events-payout.name}")
     private String topicName;
@@ -31,7 +31,7 @@ public class PayoutKafkaProducerServiceTest extends AbstractKafkaTest {
     private PayoutKafkaProducerService payoutKafkaProducerService;
 
     @Test
-    public void shouldProducePayouts() {
+    public void shouldProduceEvents() {
         int expected = 4;
         for (int i = 0; i < expected; i++) {
             Payout payout = random(Payout.class);
