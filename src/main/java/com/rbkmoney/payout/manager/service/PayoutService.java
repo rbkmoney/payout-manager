@@ -39,15 +39,25 @@ public class PayoutService {
 
     @Transactional(propagation = Propagation.REQUIRED)
     public String create(String partyId, String shopId, Cash cash, String payoutId, String payoutToolId) {
-        log.info("Trying to create a payout, partyId='{}', shopId='{}'", partyId, shopId);
+        log.info("Trying to create a payout, partyId='{}', shopId='{}', payoutId='{}', payoutToolId='{}'",
+                partyId, shopId, payoutId, payoutToolId);
         if (cash.getAmount() <= 0) {
             throw new InsufficientFundsException("Available amount must be greater than 0");
         }
-        Party party = partyManagementService.getParty(partyId);
-        if (payoutToolId == null) {
-            payoutToolId = party.getShops().get(shopId).getPayoutToolId();
+        if (payoutId == null) {
+            payoutId = UUID.randomUUID().toString();
         } else {
-            validatePayoutToolId(payoutToolId, shopId, party);
+            validatePayoutId(payoutId);
+        }
+        Party party = partyManagementService.getParty(partyId);
+        Shop shop = party.getShops().get(shopId);
+        if (shop == null) {
+            throw new NotFoundException(String.format("Shop not found, shopId='%s'", shopId));
+        }
+        if (payoutToolId == null) {
+            payoutToolId = shop.getPayoutToolId();
+        } else {
+            validatePayoutToolId(payoutToolId, shop, party);
         }
         if (payoutToolId == null) {
             throw new InvalidRequestException(
@@ -72,11 +82,6 @@ public class PayoutService {
             throw new InsufficientFundsException(
                     String.format("Negative amount in payout cash flow, amount='%d', fee='%d'", amount, fee));
         }
-        if (payoutId == null) {
-            payoutId = UUID.randomUUID().toString();
-        } else {
-            validatePayoutId(payoutId);
-        }
         save(
                 payoutId,
                 localDateTime,
@@ -95,16 +100,12 @@ public class PayoutService {
     }
 
     private void validatePayoutId(String payoutId) {
-        if (payoutDao.get(payoutId) == null) {
-            throw new NotFoundException(String.format("Payout not found, shopId='%s'", payoutId));
+        if (payoutDao.get(payoutId) != null) {
+            throw new PayoutAlreadyExistsException(String.format("Payout already exists, payoutId='%s'", payoutId));
         }
     }
 
-    private void validatePayoutToolId(String payoutToolId, String shopId, Party party) {
-        Shop shop = party.getShops().get(shopId);
-        if (shop == null) {
-            throw new NotFoundException(String.format("Shop not found, shopId='%s'", shopId));
-        }
+    private void validatePayoutToolId(String payoutToolId, Shop shop, Party party) {
         String contractId = shop.getContractId();
         Contract contract = party.getContracts().get(contractId);
         if (contract == null) {
