@@ -79,7 +79,7 @@ public class PayoutManagementHandlerTest {
 
     @Test
     public void shouldThrowExceptionAtCreateWhenInsufficientFundsIssue() {
-        when(payoutService.create(anyString(), anyString(), any(), anyString(), anyString()))
+        when(payoutService.create(anyString(), anyString(), any(), null, null))
                 .thenThrow(InsufficientFundsException.class);
         PayoutParams payoutParams = new PayoutParams(
                 new ShopParams("partyId", "shopId"),
