@@ -56,7 +56,7 @@ public class PayoutManagementHandler implements com.rbkmoney.payout.manager.Payo
             List<CashFlowPosting> cashFlowPostings = cashFlowPostingService.getCashFlowPostings(payout.getPayoutId());
             return ThriftUtil.toThriftPayout(payout, cashFlowPostings);
         } catch (NotFoundException ex) {
-            throw new NotFound();
+            throw new NotFound().setMessage(ex.getMessage());
         }
     }
 
