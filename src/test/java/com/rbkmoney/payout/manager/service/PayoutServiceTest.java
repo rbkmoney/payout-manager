@@ -37,9 +37,7 @@ public class PayoutServiceTest extends AbstractDaoConfig {
     private ShumwayService shumwayService;
     @MockBean
     private PartyManagementService partyManagementService;
-    @MockBean
-    private PayoutDao payoutDao;
-
+    
     @Autowired
     private CashFlowPostingService cashFlowPostingService;
     @Autowired
@@ -158,7 +156,9 @@ public class PayoutServiceTest extends AbstractDaoConfig {
                         buildCash(), null, "payoutToolId"));
 
         String payoutId = "payoutId";
-        when(payoutDao.get(eq(payoutId))).thenReturn(new Payout());
+        Payout payout = random(Payout.class);
+        payout.setPayoutId(payoutId);
+        saveRandomPayout(payout);
         when(partyManagementService.getParty(eq(partyId))).thenReturn(buildParty(partyId));
         assertThrows(
                 PayoutAlreadyExistsException.class,
@@ -307,15 +307,7 @@ public class PayoutServiceTest extends AbstractDaoConfig {
     @Test
     public void shouldSaveAndGet() {
         Payout payout = random(Payout.class);
-        payoutService.save(
-                payout.getPayoutId(),
-                payout.getCreatedAt(),
-                payout.getPartyId(),
-                payout.getShopId(),
-                payout.getPayoutToolId(),
-                payout.getAmount(),
-                payout.getFee(),
-                payout.getCurrencyCode());
+        saveRandomPayout(payout);
         assertEquals(PayoutStatus.UNPAID, payoutService.get(payout.getPayoutId()).getStatus());
     }
 
@@ -329,15 +321,7 @@ public class PayoutServiceTest extends AbstractDaoConfig {
     @Test
     public void shouldConfirm() {
         Payout payout = random(Payout.class);
-        payoutService.save(
-                payout.getPayoutId(),
-                payout.getCreatedAt(),
-                payout.getPartyId(),
-                payout.getShopId(),
-                payout.getPayoutToolId(),
-                payout.getAmount(),
-                payout.getFee(),
-                payout.getCurrencyCode());
+        saveRandomPayout(payout);
         doNothing().when(shumwayService).commit(anyString());
         payoutService.confirm(payout.getPayoutId());
         assertEquals(PayoutStatus.CONFIRMED, payoutService.get(payout.getPayoutId()).getStatus());
@@ -357,15 +341,7 @@ public class PayoutServiceTest extends AbstractDaoConfig {
     @Test
     public void shouldThrowExceptionAtConfirmWhenStateIsCancelled() {
         Payout payout = random(Payout.class);
-        payoutService.save(
-                payout.getPayoutId(),
-                payout.getCreatedAt(),
-                payout.getPartyId(),
-                payout.getShopId(),
-                payout.getPayoutToolId(),
-                payout.getAmount(),
-                payout.getFee(),
-                payout.getCurrencyCode());
+        saveRandomPayout(payout);
         doNothing().when(shumwayService).commit(anyString());
         doNothing().when(shumwayService).rollback(anyString());
         payoutService.cancel(payout.getPayoutId(), DETAILS);
@@ -378,15 +354,7 @@ public class PayoutServiceTest extends AbstractDaoConfig {
     @Test
     public void shouldCancel() {
         Payout payout = random(Payout.class);
-        payoutService.save(
-                payout.getPayoutId(),
-                payout.getCreatedAt(),
-                payout.getPartyId(),
-                payout.getShopId(),
-                payout.getPayoutToolId(),
-                payout.getAmount(),
-                payout.getFee(),
-                payout.getCurrencyCode());
+        saveRandomPayout(payout);
         doNothing().when(shumwayService).rollback(anyString());
         payoutService.cancel(payout.getPayoutId(), DETAILS);
         assertEquals(PayoutStatus.CANCELLED, payoutService.get(payout.getPayoutId()).getStatus());
@@ -398,9 +366,8 @@ public class PayoutServiceTest extends AbstractDaoConfig {
         verify(shumwayService, times(0)).revert(anyString());
     }
 
-    @Test
-    public void shouldCancelAfterConfirm() {
-        Payout payout = random(Payout.class);
+    @NotNull
+    private Payout saveRandomPayout(Payout payout) {
         payoutService.save(
                 payout.getPayoutId(),
                 payout.getCreatedAt(),
@@ -410,6 +377,13 @@ public class PayoutServiceTest extends AbstractDaoConfig {
                 payout.getAmount(),
                 payout.getFee(),
                 payout.getCurrencyCode());
+        return payout;
+    }
+
+    @Test
+    public void shouldCancelAfterConfirm() {
+        Payout payout = random(Payout.class);
+        saveRandomPayout(payout);
         doNothing().when(shumwayService).commit(anyString());
         payoutService.confirm(payout.getPayoutId());
         assertEquals(PayoutStatus.CONFIRMED, payoutService.get(payout.getPayoutId()).getStatus());
