@@ -63,7 +63,7 @@ public class PayoutManagementHandlerTest {
     @Test
     public void shouldCreate() throws TException {
         String payoutId = generatePayoutId();
-        when(payoutService.create(anyString(), anyString(), any(), null, null)).thenReturn(payoutId);
+        when(payoutService.create(anyString(), anyString(), any(), anyString(), anyString())).thenReturn(payoutId);
         Payout payout = random(Payout.class);
         when(payoutService.get(eq(payoutId))).thenReturn(payout);
         List<CashFlowPosting> cashFlowPostings = randomStreamOf(4, CashFlowPosting.class, "id")
@@ -79,7 +79,7 @@ public class PayoutManagementHandlerTest {
 
     @Test
     public void shouldThrowExceptionAtCreateWhenInsufficientFundsIssue() {
-        when(payoutService.create(anyString(), anyString(), any(), null, null))
+        when(payoutService.create(anyString(), anyString(), any(), anyString(), anyString()))
                 .thenThrow(InsufficientFundsException.class);
         PayoutParams payoutParams = new PayoutParams(
                 new ShopParams("partyId", "shopId"),
@@ -91,7 +91,7 @@ public class PayoutManagementHandlerTest {
 
     @Test
     public void shouldThrowExceptionAtCreateWhenPayoutToolIdIsNull() {
-        when(payoutService.create(anyString(), anyString(), any(), null, null))
+        when(payoutService.create(anyString(), anyString(), any(), anyString(), anyString()))
                 .thenThrow(InvalidRequestException.class);
         PayoutParams payoutParams = new PayoutParams(
                 new ShopParams("partyId", "shopId"),
@@ -104,7 +104,7 @@ public class PayoutManagementHandlerTest {
     @Test
     public void shouldThrowExceptionAtCreateWhenKafkaIssue() {
         String payoutId = generatePayoutId();
-        when(payoutService.create(anyString(), anyString(), any(), null, null)).thenReturn(payoutId);
+        when(payoutService.create(anyString(), anyString(), any(), anyString(), anyString())).thenReturn(payoutId);
         Payout payout = random(Payout.class);
         when(payoutService.get(eq(payoutId))).thenReturn(payout);
         List<CashFlowPosting> cashFlowPostings = randomStreamOf(4, CashFlowPosting.class, "id")
