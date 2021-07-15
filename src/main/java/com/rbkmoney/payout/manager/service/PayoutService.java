@@ -111,7 +111,7 @@ public class PayoutService {
         if (contract == null) {
             throw new NotFoundException(String.format("Contract not found, contractId='%s'", contractId));
         }
-        contract.getPayoutTools().stream()
+        PayoutTool payoutTool = contract.getPayoutTools().stream()
                 .filter(p -> p.getId().equals(payoutToolId))
                 .findAny()
                 .orElseThrow(() ->

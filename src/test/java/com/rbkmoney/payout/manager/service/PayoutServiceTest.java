@@ -37,7 +37,7 @@ public class PayoutServiceTest extends AbstractDaoConfig {
     private ShumwayService shumwayService;
     @MockBean
     private PartyManagementService partyManagementService;
-    
+
     @Autowired
     private CashFlowPostingService cashFlowPostingService;
     @Autowired
