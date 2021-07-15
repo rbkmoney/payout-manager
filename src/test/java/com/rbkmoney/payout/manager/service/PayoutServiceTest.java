@@ -95,7 +95,7 @@ public class PayoutServiceTest extends AbstractDaoConfig {
         String payoutId = payoutService.create(
                 partyId,
                 shopId,
-                new Cash(100L, new CurrencyRef("RUB")));
+                new Cash(100L, new CurrencyRef("RUB")), null, null);
         Payout payout = payoutService.get(payoutId);
         assertEquals(4L, payout.getAmount());
         assertEquals(2L, payout.getFee());
@@ -126,7 +126,7 @@ public class PayoutServiceTest extends AbstractDaoConfig {
                 () -> payoutService.create(
                         partyId,
                         shopId,
-                        new Cash(100L, new CurrencyRef("RUB"))));
+                        new Cash(100L, new CurrencyRef("RUB")), null, null));
         when(partyManagementService.getParty(eq(partyId))).thenReturn(returnedParty);
         when(partyManagementService.computePayoutCashFlow(
                 eq(partyId),
@@ -140,7 +140,7 @@ public class PayoutServiceTest extends AbstractDaoConfig {
                 () -> payoutService.create(
                         partyId,
                         shopId,
-                        new Cash(100L, new CurrencyRef("RUB"))));
+                        new Cash(100L, new CurrencyRef("RUB")), null, null));
     }
 
     @Test
@@ -161,7 +161,7 @@ public class PayoutServiceTest extends AbstractDaoConfig {
                 () -> payoutService.create(
                         partyId,
                         shopId,
-                        new Cash(100L, new CurrencyRef("RUB"))));
+                        new Cash(100L, new CurrencyRef("RUB")), null, null));
     }
 
     @Test
@@ -202,7 +202,7 @@ public class PayoutServiceTest extends AbstractDaoConfig {
                 () -> payoutService.create(
                         partyId,
                         shopId,
-                        new Cash(100L, new CurrencyRef("RUB"))));
+                        new Cash(100L, new CurrencyRef("RUB")), null, null));
     }
 
     @Test
@@ -246,7 +246,7 @@ public class PayoutServiceTest extends AbstractDaoConfig {
                 () -> payoutService.create(
                         partyId,
                         shopId,
-                        new Cash(100L, new CurrencyRef("RUB"))));
+                        new Cash(100L, new CurrencyRef("RUB")), null, null));
     }
 
     @Test

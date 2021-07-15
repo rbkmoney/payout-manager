@@ -1,8 +1,6 @@
 package com.rbkmoney.payout.manager.service;
 
-import com.rbkmoney.damsel.domain.Cash;
-import com.rbkmoney.damsel.domain.FinalCashFlowPosting;
-import com.rbkmoney.damsel.domain.Party;
+import com.rbkmoney.damsel.domain.*;
 import com.rbkmoney.damsel.shumpune.Balance;
 import com.rbkmoney.damsel.shumpune.Clock;
 import com.rbkmoney.dao.DaoException;
@@ -40,17 +38,22 @@ public class PayoutService {
     private final PayoutDao payoutDao;
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public String create(String partyId, String shopId, Cash cash) {
+    public String create(String partyId, String shopId, Cash cash, String payoutId, String payoutToolId) {
         log.info("Trying to create a payout, partyId='{}', shopId='{}'", partyId, shopId);
         if (cash.getAmount() <= 0) {
             throw new InsufficientFundsException("Available amount must be greater than 0");
         }
         Party party = partyManagementService.getParty(partyId);
-        String payoutToolId = party.getShops().get(shopId).getPayoutToolId();
+        if (payoutToolId == null) {
+            payoutToolId = party.getShops().get(shopId).getPayoutToolId();
+        } else {
+            validatePayoutToolId(payoutToolId, shopId, party);
+        }
         if (payoutToolId == null) {
             throw new InvalidRequestException(
                     String.format("PayoutToolId is null with partyId=%s, shopId=%s", partyId, shopId));
         }
+
         LocalDateTime localDateTime = LocalDateTime.now(ZoneOffset.UTC);
         String createdAt = TypeUtil.temporalToString(localDateTime.toInstant(ZoneOffset.UTC));
         List<FinalCashFlowPosting> finalCashFlowPostings = partyManagementService.computePayoutCashFlow(
@@ -69,7 +72,11 @@ public class PayoutService {
             throw new InsufficientFundsException(
                     String.format("Negative amount in payout cash flow, amount='%d', fee='%d'", amount, fee));
         }
-        String payoutId = UUID.randomUUID().toString();
+        if (payoutId == null) {
+            payoutId = UUID.randomUUID().toString();
+        } else {
+            validatePayoutId(payoutId);
+        }
         save(
                 payoutId,
                 localDateTime,
@@ -85,6 +92,29 @@ public class PayoutService {
         validateBalance(payoutId, clock, party, shopId);
         log.info("Payout has been created, payoutId='{}'", payoutId);
         return payoutId;
+    }
+
+    private void validatePayoutId(String payoutId) {
+        if (payoutDao.get(payoutId) == null) {
+            throw new NotFoundException(String.format("Payout not found, shopId='%s'", payoutId));
+        }
+    }
+
+    private void validatePayoutToolId(String payoutToolId, String shopId, Party party) {
+        Shop shop = party.getShops().get(shopId);
+        if (shop == null) {
+            throw new NotFoundException(String.format("Shop not found, shopId='%s'", shopId));
+        }
+        String contractId = shop.getContractId();
+        Contract contract = party.getContracts().get(contractId);
+        if (contract == null) {
+            throw new NotFoundException(String.format("Contract not found, contractId='%s'", contractId));
+        }
+        contract.getPayoutTools().stream()
+                .filter(p -> p.getId().equals(payoutToolId))
+                .findAny()
+                .orElseThrow(() ->
+                        new NotFoundException(String.format("PayoutTool not found, payoutToolId='%s'", payoutToolId)));
     }
 
     @Transactional(propagation = Propagation.REQUIRED)

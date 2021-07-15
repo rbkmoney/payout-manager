@@ -3,10 +3,7 @@ package com.rbkmoney.payout.manager.handler;
 import com.rbkmoney.damsel.base.InvalidRequest;
 import com.rbkmoney.payout.manager.*;
 import com.rbkmoney.payout.manager.domain.tables.pojos.CashFlowPosting;
-import com.rbkmoney.payout.manager.exception.InsufficientFundsException;
-import com.rbkmoney.payout.manager.exception.InvalidRequestException;
-import com.rbkmoney.payout.manager.exception.InvalidStateException;
-import com.rbkmoney.payout.manager.exception.NotFoundException;
+import com.rbkmoney.payout.manager.exception.*;
 import com.rbkmoney.payout.manager.service.CashFlowPostingService;
 import com.rbkmoney.payout.manager.service.PayoutKafkaProducerService;
 import com.rbkmoney.payout.manager.service.PayoutService;
@@ -29,12 +26,15 @@ public class PayoutManagementHandler implements com.rbkmoney.payout.manager.Payo
     private final PayoutKafkaProducerService payoutKafkaProducerService;
 
     @Override
-    public Payout createPayout(PayoutParams payoutParams) throws InsufficientFunds, InvalidRequest, TException {
+    public Payout createPayout(PayoutParams payoutParams) throws
+            InsufficientFunds, InvalidRequest, PayoutAlreadyExists, NotFound, TException {
         try {
             String payoutId = payoutService.create(
                     payoutParams.getShopParams().getPartyId(),
                     payoutParams.getShopParams().getShopId(),
-                    payoutParams.getCash());
+                    payoutParams.getCash(),
+                    payoutParams.getPayoutId(),
+                    payoutParams.getPayoutToolId());
             sendToKafka(payoutId);
             return getPayout(payoutId);
         } catch (InsufficientFundsException ex) {
@@ -42,39 +42,47 @@ public class PayoutManagementHandler implements com.rbkmoney.payout.manager.Payo
         } catch (InvalidRequestException ex) {
             throw new InvalidRequest(
                     Optional.ofNullable(ex.getMessage()).map(List::of).orElse(List.of()));
+        } catch (PayoutAlreadyExistsException ex) {
+            throw new PayoutAlreadyExists();
+        } catch (NotFoundException ex) {
+            throw new NotFound().setMessage(ex.getMessage());
         }
     }
 
     @Override
-    public Payout getPayout(String payoutId) throws PayoutNotFound, TException {
+    public Payout getPayout(String payoutId) throws NotFound, TException {
         try {
             var payout = payoutService.get(payoutId);
             List<CashFlowPosting> cashFlowPostings = cashFlowPostingService.getCashFlowPostings(payout.getPayoutId());
             return ThriftUtil.toThriftPayout(payout, cashFlowPostings);
         } catch (NotFoundException ex) {
-            throw new PayoutNotFound();
+            throw new NotFound();
         }
     }
 
     @Override
-    public void confirmPayout(String payoutId) throws InvalidRequest, TException {
+    public void confirmPayout(String payoutId) throws NotFound, InvalidRequest, TException {
         try {
             payoutService.confirm(payoutId);
             sendToKafka(payoutId);
         } catch (InvalidStateException ex) {
             throw new InvalidRequest(
                     Optional.ofNullable(ex.getMessage()).map(List::of).orElse(List.of()));
+        } catch (NotFoundException ex) {
+            throw new NotFound().setMessage(ex.getMessage());
         }
     }
 
     @Override
-    public void cancelPayout(String payoutId, String details) throws InvalidRequest, TException {
+    public void cancelPayout(String payoutId, String details) throws NotFound, InvalidRequest, TException {
         try {
             payoutService.cancel(payoutId, details);
             sendToKafka(payoutId);
         } catch (InvalidStateException ex) {
             throw new InvalidRequest(
                     Optional.ofNullable(ex.getMessage()).map(List::of).orElse(List.of()));
+        } catch (NotFoundException ex) {
+            throw new NotFound().setMessage(ex.getMessage());
         }
     }
 
