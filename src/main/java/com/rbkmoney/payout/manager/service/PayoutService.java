@@ -55,13 +55,13 @@ public class PayoutService {
             throw new NotFoundException(String.format("Shop not found, shopId='%s'", shopId));
         }
         if (payoutToolId == null) {
+            if (!shop.isSetPayoutToolId()) {
+                throw new InvalidRequestException(
+                        String.format("PayoutToolId is null with partyId=%s, shopId=%s", partyId, shopId));
+            }
             payoutToolId = shop.getPayoutToolId();
         } else {
             validatePayoutToolId(payoutToolId, shop, party);
-        }
-        if (payoutToolId == null) {
-            throw new InvalidRequestException(
-                    String.format("PayoutToolId is null with partyId=%s, shopId=%s", partyId, shopId));
         }
 
         LocalDateTime localDateTime = LocalDateTime.now(ZoneOffset.UTC);
