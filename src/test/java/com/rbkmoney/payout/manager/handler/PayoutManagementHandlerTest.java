@@ -73,7 +73,8 @@ public class PayoutManagementHandlerTest {
         doNothing().when(payoutKafkaProducerService).send(any());
         PayoutParams payoutParams = new PayoutParams(
                 new ShopParams("partyId", "shopId"),
-                new Cash(100L, new CurrencyRef("RUB")));
+                new com.rbkmoney.payout.manager.domain.Cash(100L,
+                        new com.rbkmoney.payout.manager.domain.CurrencyRef("RUB")));
         assertNotNull(payoutManagementHandler.createPayout(payoutParams));
     }
 
@@ -83,7 +84,8 @@ public class PayoutManagementHandlerTest {
                 .thenThrow(InsufficientFundsException.class);
         PayoutParams payoutParams = new PayoutParams(
                 new ShopParams("partyId", "shopId"),
-                new Cash(100L, new CurrencyRef("RUB")));
+                new com.rbkmoney.payout.manager.domain.Cash(100L,
+                        new com.rbkmoney.payout.manager.domain.CurrencyRef("RUB")));
         assertThrows(
                 InsufficientFunds.class,
                 () -> payoutManagementHandler.createPayout(payoutParams));
@@ -95,7 +97,8 @@ public class PayoutManagementHandlerTest {
                 .thenThrow(InvalidRequestException.class);
         PayoutParams payoutParams = new PayoutParams(
                 new ShopParams("partyId", "shopId"),
-                new Cash(100L, new CurrencyRef("RUB")));
+                new com.rbkmoney.payout.manager.domain.Cash(100L,
+                        new com.rbkmoney.payout.manager.domain.CurrencyRef("RUB")));
         assertThrows(
                 InvalidRequest.class,
                 () -> payoutManagementHandler.createPayout(payoutParams));
@@ -114,7 +117,8 @@ public class PayoutManagementHandlerTest {
         doThrow(KafkaProduceException.class).when(payoutKafkaProducerService).send(any());
         PayoutParams payoutParams = new PayoutParams(
                 new ShopParams("partyId", "shopId"),
-                new Cash(100L, new CurrencyRef("RUB")));
+                new com.rbkmoney.payout.manager.domain.Cash(100L,
+                        new com.rbkmoney.payout.manager.domain.CurrencyRef("RUB")));
         assertThrows(
                 KafkaProduceException.class,
                 () -> payoutManagementHandler.createPayout(payoutParams));
