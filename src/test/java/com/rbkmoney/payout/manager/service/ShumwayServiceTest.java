@@ -4,7 +4,7 @@ import com.rbkmoney.damsel.shumpune.AccounterSrv;
 import com.rbkmoney.damsel.shumpune.Clock;
 import com.rbkmoney.damsel.shumpune.InvalidPostingParams;
 import com.rbkmoney.damsel.shumpune.LatestClock;
-import com.rbkmoney.payout.manager.config.AbstractDaoConfig;
+import com.rbkmoney.payout.manager.config.PostgresqlSpringBootITest;
 import com.rbkmoney.payout.manager.domain.tables.pojos.CashFlowPosting;
 import com.rbkmoney.payout.manager.exception.AccounterException;
 import com.rbkmoney.payout.manager.exception.NotFoundException;
@@ -16,13 +16,15 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static io.github.benas.randombeans.api.EnhancedRandom.randomStreamOf;
+import static com.rbkmoney.payout.manager.config.AbstractDaoConfig.generatePayoutId;
+import static com.rbkmoney.testcontainers.annotations.util.RandomBeans.randomStreamOf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-public class ShumwayServiceTest extends AbstractDaoConfig {
+@PostgresqlSpringBootITest
+public class ShumwayServiceTest {
 
     @MockBean
     private AccounterSrv.Iface shumwayClient;

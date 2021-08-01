@@ -7,14 +7,12 @@ import com.rbkmoney.damsel.shumpune.LatestClock;
 import com.rbkmoney.geck.serializer.kit.mock.MockMode;
 import com.rbkmoney.geck.serializer.kit.mock.MockTBaseProcessor;
 import com.rbkmoney.geck.serializer.kit.tbase.TBaseHandler;
-import com.rbkmoney.payout.manager.config.AbstractDaoConfig;
-import com.rbkmoney.payout.manager.dao.PayoutDao;
+import com.rbkmoney.payout.manager.config.PostgresqlSpringBootITest;
 import com.rbkmoney.payout.manager.domain.enums.PayoutStatus;
 import com.rbkmoney.payout.manager.domain.tables.pojos.Payout;
 import com.rbkmoney.payout.manager.exception.*;
 import lombok.SneakyThrows;
 import org.apache.thrift.TBase;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,12 +22,14 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
-import static io.github.benas.randombeans.api.EnhancedRandom.random;
+import static com.rbkmoney.payout.manager.config.AbstractDaoConfig.generatePayoutId;
+import static com.rbkmoney.testcontainers.annotations.util.RandomBeans.random;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-public class PayoutServiceTest extends AbstractDaoConfig {
+@PostgresqlSpringBootITest
+public class PayoutServiceTest {
 
     private static final String DETAILS = "details";
 
@@ -366,7 +366,6 @@ public class PayoutServiceTest extends AbstractDaoConfig {
         verify(shumwayService, times(0)).revert(anyString());
     }
 
-    @NotNull
     private Payout saveRandomPayout(Payout payout) {
         payoutService.save(
                 payout.getPayoutId(),

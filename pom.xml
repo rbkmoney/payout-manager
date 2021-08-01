@@ -6,20 +6,17 @@
     <parent>
         <groupId>com.rbkmoney</groupId>
         <artifactId>service-parent-pom</artifactId>
-        <version>1.2.12</version>
+        <version>1.2.13</version>
     </parent>
 
     <artifactId>payout-manager</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>payout-manager</name>
     <description>payout-manager</description>
 
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <java.version>11</java.version>
         <server.port>8022</server.port>
         <management.port>8023</management.port>
         <exposed.ports>${server.port} ${management.port}</exposed.ports>
@@ -31,7 +28,6 @@
         <db.user>postgres</db.user>
         <db.password>postgres</db.password>
         <db.schema>pm</db.schema>
-        <testcontainers.version>1.15.3</testcontainers.version>
     </properties>
 
     <dependencies>
@@ -154,33 +150,15 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>${testcontainers.version}</version>
+            <groupId>com.rbkmoney</groupId>
+            <artifactId>testcontainers-annotations</artifactId>
+            <version>1.2.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>kafka</artifactId>
-            <version>${testcontainers.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>testcontainers</artifactId>
-            <version>${testcontainers.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>${testcontainers.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.github.benas</groupId>
-            <artifactId>random-beans</artifactId>
-            <version>3.7.0</version>
+            <groupId>org.rnorth.duct-tape</groupId>
+            <artifactId>duct-tape</artifactId>
+            <version>1.0.8</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

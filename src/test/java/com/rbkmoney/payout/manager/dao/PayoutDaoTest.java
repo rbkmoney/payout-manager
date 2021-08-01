@@ -1,15 +1,17 @@
 package com.rbkmoney.payout.manager.dao;
 
-import com.rbkmoney.payout.manager.config.AbstractDaoConfig;
+import com.rbkmoney.payout.manager.config.PostgresqlSpringBootITest;
 import com.rbkmoney.payout.manager.domain.enums.PayoutStatus;
 import com.rbkmoney.payout.manager.domain.tables.pojos.Payout;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import static io.github.benas.randombeans.api.EnhancedRandom.random;
+import static com.rbkmoney.payout.manager.config.AbstractDaoConfig.generatePayoutId;
+import static com.rbkmoney.testcontainers.annotations.util.RandomBeans.random;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class PayoutDaoTest extends AbstractDaoConfig {
+@PostgresqlSpringBootITest
+public class PayoutDaoTest {
 
     @Autowired
     private PayoutDao payoutDao;

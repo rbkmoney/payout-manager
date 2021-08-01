@@ -1,8 +1,6 @@
 package com.rbkmoney.payout.manager.handler;
 
 import com.rbkmoney.damsel.base.InvalidRequest;
-import com.rbkmoney.damsel.domain.Cash;
-import com.rbkmoney.damsel.domain.CurrencyRef;
 import com.rbkmoney.kafka.common.exception.KafkaProduceException;
 import com.rbkmoney.payout.manager.InsufficientFunds;
 import com.rbkmoney.payout.manager.PayoutParams;
@@ -14,7 +12,6 @@ import com.rbkmoney.payout.manager.exception.InvalidRequestException;
 import com.rbkmoney.payout.manager.service.CashFlowPostingService;
 import com.rbkmoney.payout.manager.service.PayoutKafkaProducerService;
 import com.rbkmoney.payout.manager.service.PayoutService;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.thrift.TException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,8 +28,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.rbkmoney.payout.manager.config.AbstractDaoConfig.generatePayoutId;
-import static io.github.benas.randombeans.api.EnhancedRandom.random;
-import static io.github.benas.randombeans.api.EnhancedRandom.randomStreamOf;
+import static com.rbkmoney.testcontainers.annotations.util.RandomBeans.random;
+import static com.rbkmoney.testcontainers.annotations.util.RandomBeans.randomStreamOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -46,8 +43,7 @@ import static org.mockito.Mockito.*;
         initializers = PayoutManagementHandlerTest.Initializer.class
 )
 @TestPropertySource("classpath:application.yml")
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-@Slf4j
+@DirtiesContext
 public class PayoutManagementHandlerTest {
 
     @MockBean

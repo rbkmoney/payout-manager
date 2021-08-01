@@ -74,3 +74,9 @@ kafka:
       name: pm-events-payout
       produce:
         enabled: false
+
+testcontainers:
+  postgresql:
+    tag: '11.4'
+  kafka:
+    tag: '6.2.0'

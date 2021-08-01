@@ -1,6 +1,6 @@
 package com.rbkmoney.payout.manager.dao;
 
-import com.rbkmoney.payout.manager.config.AbstractDaoConfig;
+import com.rbkmoney.payout.manager.config.PostgresqlSpringBootITest;
 import com.rbkmoney.payout.manager.domain.tables.pojos.CashFlowPosting;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,10 +8,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static io.github.benas.randombeans.api.EnhancedRandom.randomStreamOf;
+import static com.rbkmoney.payout.manager.config.AbstractDaoConfig.generatePayoutId;
+import static com.rbkmoney.testcontainers.annotations.util.RandomBeans.randomStreamOf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class CashFlowPostingDaoTest extends AbstractDaoConfig {
+@PostgresqlSpringBootITest
+public class CashFlowPostingDaoTest {
 
     @Autowired
     private CashFlowPostingDao cashFlowPostingDao;
