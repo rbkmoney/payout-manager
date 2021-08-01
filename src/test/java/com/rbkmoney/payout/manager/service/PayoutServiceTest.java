@@ -22,7 +22,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
-import static com.rbkmoney.payout.manager.config.AbstractDaoConfig.generatePayoutId;
+import static com.rbkmoney.payout.manager.util.ValuesGenerator.generatePayoutId;
 import static com.rbkmoney.testcontainers.annotations.util.RandomBeans.random;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
