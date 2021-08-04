@@ -5,7 +5,7 @@ import com.rbkmoney.payout.manager.domain.tables.pojos.CashFlowPosting;
 import com.rbkmoney.payout.manager.domain.tables.pojos.Payout;
 import com.rbkmoney.payout.manager.util.ThriftUtil;
 import com.rbkmoney.testcontainers.annotations.KafkaSpringBootTest;
-import com.rbkmoney.testcontainers.annotations.kafka.KafkaTestcontainerSingleton;
+import com.rbkmoney.testcontainers.annotations.kafka.KafkaTestcontainer;
 import com.rbkmoney.testcontainers.annotations.kafka.config.KafkaConsumer;
 import com.rbkmoney.testcontainers.annotations.postgresql.PostgresqlTestcontainerSingleton;
 import org.junit.jupiter.api.Test;
@@ -23,7 +23,7 @@ import static com.rbkmoney.testcontainers.annotations.util.RandomBeans.randomStr
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @PostgresqlTestcontainerSingleton
-@KafkaTestcontainerSingleton(
+@KafkaTestcontainer(
         properties = "kafka.topic.pm-events-payout.produce.enabled=true",
         topicsKeys = "kafka.topic.pm-events-payout.name")
 @KafkaSpringBootTest
