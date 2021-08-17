@@ -214,11 +214,10 @@ public class ShumwayService {
     }
 
     private String buildPostingDescription(String payoutId, String description) {
-        String postingDescription = "PAYOUT-" + payoutId;
-        if (description != null) {
-            postingDescription += ": " + description;
+        if (description == null) {
+            return "PAYOUT-" + payoutId;
         }
-        return postingDescription;
+        return description;
     }
 
     private String toPlanId(String payoutId) {
