@@ -1,8 +1,6 @@
 package com.rbkmoney.payout.manager.handler;
 
 import com.rbkmoney.damsel.base.InvalidRequest;
-import com.rbkmoney.damsel.domain.Cash;
-import com.rbkmoney.damsel.domain.CurrencyRef;
 import com.rbkmoney.payout.manager.*;
 import com.rbkmoney.payout.manager.domain.tables.pojos.CashFlowPosting;
 import com.rbkmoney.payout.manager.exception.*;
@@ -34,7 +32,7 @@ public class PayoutManagementHandler implements com.rbkmoney.payout.manager.Payo
             String payoutId = payoutService.create(
                     payoutParams.getShopParams().getPartyId(),
                     payoutParams.getShopParams().getShopId(),
-                    buildCash(payoutParams.getCash()),
+                    payoutParams.getCash(),
                     payoutParams.getPayoutId(),
                     payoutParams.getPayoutToolId());
             sendToKafka(payoutId);
@@ -49,12 +47,6 @@ public class PayoutManagementHandler implements com.rbkmoney.payout.manager.Payo
         } catch (NotFoundException ex) {
             throw new NotFound().setMessage(ex.getMessage());
         }
-    }
-
-    private Cash buildCash(com.rbkmoney.payout.manager.domain.Cash cash) {
-        return new Cash()
-                .setAmount(cash.getAmount())
-                .setCurrency(new CurrencyRef(cash.getCurrency().getSymbolicCode()));
     }
 
     @Override

@@ -1,6 +1,8 @@
 package com.rbkmoney.payout.manager.handler;
 
 import com.rbkmoney.damsel.base.InvalidRequest;
+import com.rbkmoney.damsel.domain.Cash;
+import com.rbkmoney.damsel.domain.CurrencyRef;
 import com.rbkmoney.kafka.common.exception.KafkaProduceException;
 import com.rbkmoney.payout.manager.InsufficientFunds;
 import com.rbkmoney.payout.manager.PayoutParams;
@@ -69,8 +71,8 @@ public class PayoutManagementHandlerTest {
         doNothing().when(payoutKafkaProducerService).send(any());
         PayoutParams payoutParams = new PayoutParams(
                 new ShopParams("partyId", "shopId"),
-                new com.rbkmoney.payout.manager.domain.Cash(100L,
-                        new com.rbkmoney.payout.manager.domain.CurrencyRef("RUB")));
+                new Cash(100L,
+                        new CurrencyRef("RUB")));
         assertNotNull(payoutManagementHandler.createPayout(payoutParams));
     }
 
@@ -80,8 +82,8 @@ public class PayoutManagementHandlerTest {
                 .thenThrow(InsufficientFundsException.class);
         PayoutParams payoutParams = new PayoutParams(
                 new ShopParams("partyId", "shopId"),
-                new com.rbkmoney.payout.manager.domain.Cash(100L,
-                        new com.rbkmoney.payout.manager.domain.CurrencyRef("RUB")));
+                new Cash(100L,
+                        new CurrencyRef("RUB")));
         assertThrows(
                 InsufficientFunds.class,
                 () -> payoutManagementHandler.createPayout(payoutParams));
@@ -93,8 +95,8 @@ public class PayoutManagementHandlerTest {
                 .thenThrow(InvalidRequestException.class);
         PayoutParams payoutParams = new PayoutParams(
                 new ShopParams("partyId", "shopId"),
-                new com.rbkmoney.payout.manager.domain.Cash(100L,
-                        new com.rbkmoney.payout.manager.domain.CurrencyRef("RUB")));
+                new Cash(100L,
+                        new CurrencyRef("RUB")));
         assertThrows(
                 InvalidRequest.class,
                 () -> payoutManagementHandler.createPayout(payoutParams));
@@ -113,8 +115,8 @@ public class PayoutManagementHandlerTest {
         doThrow(KafkaProduceException.class).when(payoutKafkaProducerService).send(any());
         PayoutParams payoutParams = new PayoutParams(
                 new ShopParams("partyId", "shopId"),
-                new com.rbkmoney.payout.manager.domain.Cash(100L,
-                        new com.rbkmoney.payout.manager.domain.CurrencyRef("RUB")));
+                new Cash(100L,
+                        new CurrencyRef("RUB")));
         assertThrows(
                 KafkaProduceException.class,
                 () -> payoutManagementHandler.createPayout(payoutParams));

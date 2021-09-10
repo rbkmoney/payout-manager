@@ -55,7 +55,7 @@ public class ThriftUtil {
                 .setPayoutToolId(payout.getPayoutToolId())
                 .setAmount(payout.getAmount())
                 .setFee(payout.getFee())
-                .setCurrency(new com.rbkmoney.payout.manager.domain.CurrencyRef(payout.getCurrencyCode()));
+                .setCurrency(new CurrencyRef(payout.getCurrencyCode()));
     }
 
     public static List<CashFlowPosting> toDomainCashFlows(
@@ -98,16 +98,16 @@ public class ThriftUtil {
         }
     }
 
-    private static List<com.rbkmoney.payout.manager.domain.FinalCashFlowPosting> toThriftCashFlows(
+    private static List<FinalCashFlowPosting> toThriftCashFlows(
             List<CashFlowPosting> cashFlowPostings) {
         return cashFlowPostings.stream()
-                .map(cfp -> new com.rbkmoney.payout.manager.domain.FinalCashFlowPosting(
-                        new com.rbkmoney.payout.manager.domain.FinalCashFlowAccount(
+                .map(cfp -> new FinalCashFlowPosting(
+                        new FinalCashFlowAccount(
                                 toAccountType(cfp.getFromAccountType()), cfp.getFromAccountId()),
-                        new com.rbkmoney.payout.manager.domain.FinalCashFlowAccount(
+                        new FinalCashFlowAccount(
                                 toAccountType(cfp.getToAccountType()), cfp.getToAccountId()),
-                        new com.rbkmoney.payout.manager.domain.Cash(cfp.getAmount(),
-                                new com.rbkmoney.payout.manager.domain.CurrencyRef(cfp.getCurrencyCode())))
+                        new Cash(cfp.getAmount(),
+                                new CurrencyRef(cfp.getCurrencyCode())))
                         .setDetails(cfp.getDescription()))
                 .collect(Collectors.toList());
     }
@@ -150,29 +150,29 @@ public class ThriftUtil {
         }
     }
 
-    private static com.rbkmoney.payout.manager.domain.CashFlowAccount toAccountType(AccountType accountType) {
+    private static CashFlowAccount toAccountType(AccountType accountType) {
         switch (accountType) {
             case EXTERNAL_INCOME:
-                return com.rbkmoney.payout.manager.domain.CashFlowAccount.external(
-                        com.rbkmoney.payout.manager.domain.ExternalCashFlowAccount.income);
+                return CashFlowAccount.external(
+                        ExternalCashFlowAccount.income);
             case EXTERNAL_OUTCOME:
-                return com.rbkmoney.payout.manager.domain.CashFlowAccount.external(
-                        com.rbkmoney.payout.manager.domain.ExternalCashFlowAccount.outcome);
+                return CashFlowAccount.external(
+                        ExternalCashFlowAccount.outcome);
             case MERCHANT_PAYOUT:
-                return com.rbkmoney.payout.manager.domain.CashFlowAccount.merchant(
-                        com.rbkmoney.payout.manager.domain.MerchantCashFlowAccount.payout);
+                return CashFlowAccount.merchant(
+                        MerchantCashFlowAccount.payout);
             case MERCHANT_GUARANTEE:
-                return com.rbkmoney.payout.manager.domain.CashFlowAccount.merchant(
-                        com.rbkmoney.payout.manager.domain.MerchantCashFlowAccount.guarantee);
+                return CashFlowAccount.merchant(
+                        MerchantCashFlowAccount.guarantee);
             case MERCHANT_SETTLEMENT:
-                return com.rbkmoney.payout.manager.domain.CashFlowAccount.merchant(
-                        com.rbkmoney.payout.manager.domain.MerchantCashFlowAccount.settlement);
+                return CashFlowAccount.merchant(
+                        MerchantCashFlowAccount.settlement);
             case SYSTEM_SETTLEMENT:
-                return com.rbkmoney.payout.manager.domain.CashFlowAccount.system(
-                        com.rbkmoney.payout.manager.domain.SystemCashFlowAccount.settlement);
+                return CashFlowAccount.system(
+                        SystemCashFlowAccount.settlement);
             case PROVIDER_SETTLEMENT:
-                return com.rbkmoney.payout.manager.domain.CashFlowAccount.provider(
-                        com.rbkmoney.payout.manager.domain.ProviderCashFlowAccount.settlement);
+                return CashFlowAccount.provider(
+                        ProviderCashFlowAccount.settlement);
             default:
                 throw new IllegalArgumentException();
         }
